@@ -1,19 +1,19 @@
 {
-  "name": "vscode-example-test-adapter",
-  "displayName": "Example Test Explorer",
-  "description": "Run your Example tests in the Sidebar of Visual Studio Code",
+  "name": "cpputest-test-adapter",
+  "displayName": "CppUTest Test Adapter",
+  "description": "Run your CppUTest tests in the Sidebar of Visual Studio Code",
   "icon": "img/icon.png",
-  "author": "Holger Benl <hbenl@evandor.de>",
-  "publisher": "hbenl",
+  "author": "Benjamin Giesinger <benjamin.giesinger@gmail.com>",
+  "publisher": "bneumann",
   "version": "0.0.1",
   "license": "MIT",
-  "homepage": "https://github.com/hbenl/vscode-example-test-adapter",
+  "homepage": "https://github.com/bneumann/CppUTest-Test-Adapter",
   "repository": {
     "type": "git",
-    "url": "https://github.com/hbenl/vscode-example-test-adapter.git"
+    "url": "https://github.com/bneumann/CppUTest-Test-Adapter.git"
   },
   "bugs": {
-    "url": "https://github.com/hbenl/vscode-example-test-adapter/issues"
+    "url": "https://github.com/bneumann/CppUTest-Test-Adapter/issues"
   },
   "categories": [
     "Other"
@@ -53,14 +53,26 @@
   "contributes": {
     "configuration": {
       "type": "object",
-      "title": "Example Test Explorer configuration",
+      "title": "CppUTest Explorer configuration",
       "properties": {
-        "exampleExplorer.logpanel": {
+        "cpputestExplorer.testExecutable": {
+          "description": "executable that contains all tests",
+          "default": "",
+          "type": "string",
+          "scope": "resource"
+        },
+        "cpputestExplorer.testExecutablePath": {
+          "description": "path where the executable should be run in",
+          "default": "",
+          "type": "string",
+          "scope": "resource"
+        },
+        "cpputestExplorer.logpanel": {
           "description": "write diagnotic logs to an output panel",
           "type": "boolean",
           "scope": "resource"
         },
-        "exampleExplorer.logfile": {
+        "cpputestExplorer.logfile": {
           "description": "write diagnostic logs to the given file",
           "type": "string",
           "scope": "resource"

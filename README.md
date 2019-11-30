@@ -1,31 +1,14 @@
-# Example Test Adapter for Visual Studio Code
+# CppUTest Test Adapter for Visual Studio Code
 
-This repository contains an example for implementing a `TestAdapter` extension that works with the
-[Test Explorer](https://marketplace.visualstudio.com/items?itemName=hbenl.vscode-test-explorer) extension.
-
-More documentation can be found in the [Test Adapter API repository](https://github.com/hbenl/vscode-test-adapter-api).
+This is the implementation for a [CppUTest](https://cpputest.github.io/) Test Adapter for VSCode.
 
 ## Setup
 
-* install the [Test Explorer](https://marketplace.visualstudio.com/items?itemName=hbenl.vscode-test-explorer) extension
-* fork and clone this repository and open it in VS Code
-* run `npm install`
-* run `npm run watch` or start the watch Task in VS Code
-* start the debugger
-
-You should now see a second VS Code window, the Extension Development Host.
-Open a folder in this window and click the "Test" icon in the Activity bar.
-Now you should see the fake example test suite in the side panel:
-
-![The fake example test suite](img/fake-tests.png)
-
-## Basic implementation
-
-* add any configuration properties that your Test Adapter needs to the `contributes.configuration.properties` section of `package.json`
-* replace the `loadFakeTests()` call in `src/adapter.ts` with your code for loading the test definitions for the real test framework
-* replace the `runFakeTests()` call in `src/adapter.ts` with your code for running the tests in a child process using the real test framework
+T.B.D.
 
 ## Getting ready to publish
+
+This is kept here as long as I am working on it.
 
 * search for all occurrences of the word "example" in this project and replace them with the name of the testing framework that your Test Adapter supports
 * update `package.json` with your preferred values (at a minimum you should change `author`, `publisher`, `homepage`, `repository` and `bugs`)
