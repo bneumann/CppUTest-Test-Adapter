@@ -7,7 +7,7 @@ import { loadTests, runTests } from './cpputest'
  * This class is intended as a starting point for implementing a "real" TestAdapter.
  * The file `README.md` contains further instructions.
  */
-export class ExampleAdapter implements TestAdapter {
+export class CppUTestAdapter implements TestAdapter {
 
 	private disposables: { dispose(): void }[] = [];
 
@@ -24,7 +24,7 @@ export class ExampleAdapter implements TestAdapter {
 		private readonly log: Log
 	) {
 
-		this.log.info('Initializing example adapter');
+		this.log.info('Initializing adapter');
 
 		this.disposables.push(this.testsEmitter);
 		this.disposables.push(this.testStatesEmitter);
@@ -34,11 +34,11 @@ export class ExampleAdapter implements TestAdapter {
 
 	async load(): Promise<void> {
 
-		this.log.info('Loading example tests');
-
 		this.testsEmitter.fire(<TestLoadStartedEvent>{ type: 'started' });
+		this.log.info('Loading tests');
 
-		const loadedTests = await loadTests(); //loadFakeTests();
+		const loadedTests = await loadTests();
+		this.log.info('Tests loaded');
 
 		this.testsEmitter.fire(<TestLoadFinishedEvent>{ type: 'finished', suite: loadedTests });
 
@@ -46,13 +46,10 @@ export class ExampleAdapter implements TestAdapter {
 
 	async run(tests: string[]): Promise<void> {
 
-		this.log.info(`Running example tests ${JSON.stringify(tests)}`);
-
 		this.testStatesEmitter.fire(<TestRunStartedEvent>{ type: 'started', tests });
-
-		// in a "real" TestAdapter this would start a test run in a child process
+		this.log.info('Running tests');
 		await runTests(tests, this.testStatesEmitter);
-
+		this.log.info('Done');
 		this.testStatesEmitter.fire(<TestRunFinishedEvent>{ type: 'finished' });
 
 	}

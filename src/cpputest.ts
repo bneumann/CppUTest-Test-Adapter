@@ -1,6 +1,11 @@
 import * as vscode from 'vscode';
 import { execFile } from 'child_process';
-import { TestSuiteInfo, TestInfo, TestRunStartedEvent, TestRunFinishedEvent, TestSuiteEvent, TestEvent } from 'vscode-test-adapter-api';
+import { TestSuiteInfo, TestInfo, TestRunStartedEvent, TestRunFinishedEvent, TestSuiteEvent, TestEvent, TestDecoration } from 'vscode-test-adapter-api';
+import { CppUTest, CppUTestGroup } from './CppUTestImplementation';
+import * as xml2js from 'xml2js';
+import * as fs from 'fs';
+
+let suite: CppUTestGroup;
 
 export function loadTests(): Promise<TestSuiteInfo> {
     const runner: string | undefined = vscode.workspace.getConfiguration("cpputestExplorer").testExecutable;
@@ -16,6 +21,7 @@ export function loadTests(): Promise<TestSuiteInfo> {
             }
             const groupStrings: string[] = stdout.split(" ");
             const groups = [...new Set(groupStrings.map(gs => gs.split(".")[0]))];            
+            suite = new CppUTestGroup("CppuTest Suite");
             groups.forEach(g => suite.children.push(new CppUTestGroup(g)));
             groupStrings.forEach(gs => suite.TestGroups.forEach(tg => tg.addTest(gs)));
             resolve(suite);
@@ -55,96 +61,106 @@ async function runNode(
 
 	if (node.type === 'suite') {
 
-		testStatesEmitter.fire(<TestSuiteEvent>{ type: 'suite', suite: node.id, state: 'running' });
+		testStatesEmitter.fire(<TestSuiteEvent>{ type: 'suite', suite: node, state: 'running' });
 
 		for (const child of node.children) {
 			await runNode(child, testStatesEmitter);
 		}
 
-		testStatesEmitter.fire(<TestSuiteEvent>{ type: 'suite', suite: node.id, state: 'completed' });
+		testStatesEmitter.fire(<TestSuiteEvent>{ type: 'suite', suite: node, state: 'completed' });
 
 	} else { // node.type === 'test'
 
-		testStatesEmitter.fire(<TestEvent>{ type: 'test', test: node.id, state: 'running' });
+		testStatesEmitter.fire(<TestEvent>{ type: 'test', test: node, state: 'running' });
 
         const runner: string | undefined = vscode.workspace.getConfiguration("cpputestExplorer").testExecutable;
-        const path: string | undefined = vscode.workspace.getConfiguration("cpputestExplorer").testExecutablePath;
-    
+        const path: string = vscode.workspace.getConfiguration("cpputestExplorer").testExecutablePath;
+        let group: string, test: string;
+        [group, test] = node.id.split(".");        
         const command: string = runner ? runner : "";
-    
-        execFile(command, ["-ln"], { cwd: path }, (error, stdout, stderr) => {
-            if (error) {
-                console.error('stderr', stderr);
-            }            
-        });
-
-		testStatesEmitter.fire(<TestEvent>{ type: 'test', test: node.id, state: 'passed' });
-
+        
+        const event: TestEvent = await runSingleCall(command, group, test, path);
+        testStatesEmitter.fire(event);
 	}
 }
 
-
-class CppUTestGroup implements TestSuiteInfo 
+async function runSingleCall(command: string, group: string, test: string, path: string)
 {
-    type: "suite";
-    id: string;
-    label: string;
-    description?: string | undefined;
-    tooltip?: string | undefined;
-    file?: string | undefined;
-    line?: number | undefined;
-    children: (TestSuiteInfo | TestInfo)[];
-
-    constructor(inputString: string)
-    {
-        this.type = "suite";
-        this.id = inputString;
-        this.label = inputString;
-        this.children = new Array<CppuTest | CppUTestGroup>();
-    }
-
-    addTest(inputString: string)
-    {
-        if(inputString.indexOf("."))
-        {
-            const stringSplit = inputString.split(".");
-            if(stringSplit[0] === this.label)
-            {
-                this.children.push(new CppuTest(stringSplit[1]));
+    const promise: Promise<TestEvent> = new Promise<TestEvent>((resolve, reject) => {
+        execFile(command, ["-sg", group, "-sn", test, "-ojunit"], { cwd: path },  (error: any, stdout, stderr) => {
+            if (error && error.code === null) {
+                resolve(Promise.resolve(<TestEvent>{type: 'test', test: suite.findTest(group+"."+test), state: 'errored', message: stderr }));
+                return;
             }
-        }
-    }
-
-    get TestGroups(): CppUTestGroup[]
-    {
-        const retVal: CppUTestGroup[] = new Array<CppUTestGroup>();
-        this.children.forEach(c => {
-            if(c instanceof CppUTestGroup){
-                retVal.push(c);
-            }
-        })
-        return retVal;
-    }
+            resolve(evaluateXML(group, path));            
+        });
+    });
+    return Promise.resolve(promise);
 }
 
-class CppuTest implements TestInfo
+async function evaluateXML(
+    group: string,
+    path: string)
 {
-    type: "test";    
-    id: string;
-    label: string;
-    description?: string | undefined;
-    tooltip?: string | undefined;
-    file?: string | undefined;
-    line?: number | undefined;
-    skipped?: boolean | undefined;
-
-    
-    constructor(inputString: string)
+    const parser: xml2js.Parser = new xml2js.Parser();
+    const fileName: string = path + "/cpputest_" + group + ".xml";
+    if(!fs.existsSync(fileName))
     {
-        this.type = "test";
-        this.id = inputString;
-        this.label = inputString;
-    }  
-}
+        return Promise.resolve(<TestEvent>{type: 'test', test: group, state: 'errored', message: "Test crashed" })
+    }
+    const xml: Buffer = fs.readFileSync(fileName);
+    const promise: Promise<TestEvent> = new Promise<TestEvent>((resolve, reject) => {
+        parser.parseString(xml, function (err: string, result: any) {
+            if (err) {
+                reject(err);
+            } else {
+                const tc: any = result.testsuite.testcase[0];
+                const testName: string = tc.$.name;
+                const testGroup: string = tc.$.classname;
+                const testFile: string = tc.$.file;
+                const testLine: number = Number.parseInt(tc.$.line);
+                let state: TestEvent["state"];
+                if(tc.failure) 
+                {
+                    state = "failed";
+                }
+                else if(tc.skipped)
+                {
+                    state = "skipped";
+                }
+                else
+                {
+                    state = "passed";
+                } 
+                let message: string = "";
+                let decoration: TestDecoration[] | undefined = undefined;
+                if(state === "failed")
+                {
+                    const failure: any = tc.failure[0].$;
+                    message = failure.message;                    
+                    decoration = [
+                        {
+                            line: Number.parseInt(message.split(":")[1]),
+                            message: message.split(":")[2]
+                        }
+                    ];
+                }
 
-const suite: CppUTestGroup = new CppUTestGroup("CppuTest Suite");
+                const testInfo = new CppUTest(testName, testGroup);
+                const path: string = vscode.workspace.getConfiguration("cpputestExplorer").testExecutablePath;
+                testInfo.file = path + testFile;
+                testInfo.line = testLine;
+                suite.updateTest(testInfo);
+                const event: TestEvent = {
+                    type: 'test',
+                    test: testInfo,
+                    state: state,
+                    message: message,
+                    decorations: decoration
+                }
+                resolve(event);
+            }
+        });
+    })
+    return Promise.resolve(promise);
+}

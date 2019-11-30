@@ -1,15 +1,15 @@
 import * as vscode from 'vscode';
 import { TestHub, testExplorerExtensionId } from 'vscode-test-adapter-api';
 import { Log, TestAdapterRegistrar } from 'vscode-test-adapter-util';
-import { ExampleAdapter } from './adapter';
+import { CppUTestAdapter } from './adapter';
 
 export async function activate(context: vscode.ExtensionContext) {
 
 	const workspaceFolder = (vscode.workspace.workspaceFolders || [])[0];
 
 	// create a simple logger that can be configured with the configuration variables
-	// `exampleExplorer.logpanel` and `exampleExplorer.logfile`
-	const log = new Log('exampleExplorer', workspaceFolder, 'Example Explorer Log');
+	// `cpputestExplorer.logpanel"` and `cpputestExplorer.logfile`
+	const log = new Log('cpputestExplorer', workspaceFolder, 'CppUTest Explorer Log');
 	context.subscriptions.push(log);
 
 	// get the Test Explorer extension
@@ -23,7 +23,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		// this will register an ExampleTestAdapter for each WorkspaceFolder
 		context.subscriptions.push(new TestAdapterRegistrar(
 			testHub,
-			workspaceFolder => new ExampleAdapter(workspaceFolder, log),
+			workspaceFolder => new CppUTestAdapter(workspaceFolder, log),
 			log
 		));
 	}

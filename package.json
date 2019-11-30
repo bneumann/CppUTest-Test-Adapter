@@ -32,9 +32,11 @@
     "publish": "vsce publish"
   },
   "dependencies": {
+    "@types/xml2js": "^0.4.5",
     "tslib": "^1.9.3",
     "vscode-test-adapter-api": "^1.7.0",
-    "vscode-test-adapter-util": "^0.7.0"
+    "vscode-test-adapter-util": "^0.7.0",
+    "xml2js": "^0.4.22"
   },
   "devDependencies": {
     "@types/vscode": "~1.23.0",
