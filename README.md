@@ -2,6 +2,8 @@
 
 This is the implementation for a [CppUTest](https://cpputest.github.io/) Test Adapter for VSCode.
 
+![tests](file://img/test.png)
+
 ## Setup
 
 To let this plugin know where your tests are set the ```cpputestExplorer.testExecutable``` to the executable of your tests. They will be executed in the ```cpputestExplorer.testExecutablePath``` path. This is currently a manual step.
