@@ -2,7 +2,7 @@
 
 This is the implementation for a [CppUTest](https://cpputest.github.io/) Test Adapter for VSCode.
 
-![tests](file://img/test.png)
+![tests](img/tests.png)
 
 ## Setup
 
