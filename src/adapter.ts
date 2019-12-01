@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { TestAdapter, TestLoadStartedEvent, TestLoadFinishedEvent, TestRunStartedEvent, TestRunFinishedEvent, TestSuiteEvent, TestEvent } from 'vscode-test-adapter-api';
 import { Log } from 'vscode-test-adapter-util';
 import { loadTests, runTests } from './cpputest'
+import *  as fs from 'fs';
 
 /**
  * This class is intended as a starting point for implementing a "real" TestAdapter.
@@ -29,6 +30,15 @@ export class CppUTestAdapter implements TestAdapter {
 		this.disposables.push(this.testsEmitter);
 		this.disposables.push(this.testStatesEmitter);
 		this.disposables.push(this.autorunEmitter);
+
+		const runner: string | undefined = vscode.workspace.getConfiguration("cpputestExplorer").testExecutable;
+		fs.watchFile(<fs.PathLike>runner, (cur: fs.Stats, prev: fs.Stats) => {
+			if(cur.mtimeMs !== prev.mtimeMs)
+			{
+				this.log.info("Executable changed, updating test cases");
+				this.load();
+			}
+		})
 
 	}
 
