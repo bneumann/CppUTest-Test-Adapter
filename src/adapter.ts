@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { TestAdapter, TestLoadStartedEvent, TestLoadFinishedEvent, TestRunStartedEvent, TestRunFinishedEvent, TestSuiteEvent, TestEvent } from 'vscode-test-adapter-api';
+import { TestAdapter, TestLoadStartedEvent, TestLoadFinishedEvent, TestRunStartedEvent, TestRunFinishedEvent, TestSuiteEvent, TestEvent, RetireEvent } from 'vscode-test-adapter-api';
 import { Log } from 'vscode-test-adapter-util';
 import { loadTests, runTests } from './cpputest'
 import *  as fs from 'fs';
@@ -14,11 +14,11 @@ export class CppUTestAdapter implements TestAdapter {
 
 	private readonly testsEmitter = new vscode.EventEmitter<TestLoadStartedEvent | TestLoadFinishedEvent>();
 	private readonly testStatesEmitter = new vscode.EventEmitter<TestRunStartedEvent | TestRunFinishedEvent | TestSuiteEvent | TestEvent>();
-	private readonly autorunEmitter = new vscode.EventEmitter<void>();
+	private readonly autorunEmitter = new vscode.EventEmitter<RetireEvent>();
 
 	get tests(): vscode.Event<TestLoadStartedEvent | TestLoadFinishedEvent> { return this.testsEmitter.event; }
 	get testStates(): vscode.Event<TestRunStartedEvent | TestRunFinishedEvent | TestSuiteEvent | TestEvent> { return this.testStatesEmitter.event; }
-	get autorun(): vscode.Event<void> | undefined { return this.autorunEmitter.event; }
+	get retire(): vscode.Event<RetireEvent> | undefined { return this.autorunEmitter.event; }
 
 	constructor(
 		public readonly workspace: vscode.WorkspaceFolder,
@@ -37,6 +37,7 @@ export class CppUTestAdapter implements TestAdapter {
 			{
 				this.log.info("Executable changed, updating test cases");
 				this.load();
+				this.autorunEmitter.fire();
 			}
 		})
 
