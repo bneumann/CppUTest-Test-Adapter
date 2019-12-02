@@ -10,11 +10,7 @@ To let this plugin know where your tests are set the ```cpputestExplorer.testExe
 
 ### Quirks & Known issues
 - Only 1 executable is supported right now
-- Updating the tests after rebuild sometimes takes a bit longer (never more that 5 seconds)
 - CppUTest does not let me change the output path of the JUnit file which I use to generate results (line numbers, etc.). Therefore they polute the executable directory
 - Somehow line number and file information are not propagated to the Test Explorer. I am on it.
 - I am a developer and I write bugs. So there must be plenty in here!
 
-## Getting ready to publish
-
-Now you're ready to [publish](https://code.visualstudio.com/docs/extensions/publish-extension) the first version of your Test Adapter.

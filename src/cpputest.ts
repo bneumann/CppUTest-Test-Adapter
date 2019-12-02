@@ -1,11 +1,12 @@
 import * as vscode from 'vscode';
-import { execFile } from 'child_process';
+import { execFile, ChildProcess } from 'child_process';
 import { TestSuiteInfo, TestInfo, TestRunStartedEvent, TestRunFinishedEvent, TestSuiteEvent, TestEvent, TestDecoration } from 'vscode-test-adapter-api';
 import { CppUTest, CppUTestGroup } from './CppUTestImplementation';
 import * as xml2js from 'xml2js';
 import * as fs from 'fs';
 
 let suite: CppUTestGroup;
+const processes: ChildProcess[] = Array<ChildProcess>();
 
 export function loadTests(): Promise<TestSuiteInfo> {
     const runner: string | undefined = vscode.workspace.getConfiguration("cpputestExplorer").testExecutable;
@@ -40,6 +41,11 @@ export async function runTests(
 			await runNode(node, testStatesEmitter);
 		}
 	}
+}
+
+export function killTestRun() 
+{
+    processes.forEach(p => p.kill("SIGTERM"));
 }
 
 function findNode(searchNode: TestSuiteInfo | TestInfo, id: string): TestSuiteInfo | TestInfo | undefined {
@@ -87,13 +93,14 @@ async function runNode(
 async function runSingleCall(command: string, group: string, test: string, path: string)
 {
     const promise: Promise<TestEvent> = new Promise<TestEvent>((resolve, reject) => {
-        execFile(command, ["-sg", group, "-sn", test, "-ojunit"], { cwd: path },  (error: any, stdout, stderr) => {
+        const runProcess: ChildProcess = execFile(command, ["-sg", group, "-sn", test, "-ojunit"], { cwd: path },  (error: any, stdout, stderr) => {
             if (error && error.code === null) {
                 resolve(Promise.resolve(<TestEvent>{type: 'test', test: suite.findTest(group+"."+test), state: 'errored', message: stderr }));
                 return;
             }
             resolve(evaluateXML(group, path));            
         });
+        processes.push(runProcess);
     });
     return Promise.resolve(promise);
 }

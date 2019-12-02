@@ -1,13 +1,9 @@
 import * as vscode from 'vscode';
 import { TestAdapter, TestLoadStartedEvent, TestLoadFinishedEvent, TestRunStartedEvent, TestRunFinishedEvent, TestSuiteEvent, TestEvent, RetireEvent } from 'vscode-test-adapter-api';
 import { Log } from 'vscode-test-adapter-util';
-import { loadTests, runTests } from './cpputest'
+import { loadTests, runTests, killTestRun } from './cpputest'
 import *  as fs from 'fs';
 
-/**
- * This class is intended as a starting point for implementing a "real" TestAdapter.
- * The file `README.md` contains further instructions.
- */
 export class CppUTestAdapter implements TestAdapter {
 
 	private disposables: { dispose(): void }[] = [];
@@ -72,8 +68,8 @@ export class CppUTestAdapter implements TestAdapter {
 */
 
 	cancel(): void {
-		// in a "real" TestAdapter this would kill the child process for the current test run (if there is any)
-		throw new Error("Method not implemented.");
+		killTestRun();
+		this.testStatesEmitter.fire(<TestRunFinishedEvent>{ type: 'finished' });
 	}
 
 	dispose(): void {
