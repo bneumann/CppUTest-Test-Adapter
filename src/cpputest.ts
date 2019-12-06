@@ -48,6 +48,11 @@ export function killTestRun()
     processes.forEach(p => p.kill("SIGTERM"));
 }
 
+export function debugTest(tests: string[])
+{
+    console.log(vscode.workspace);
+}
+
 function findNode(searchNode: TestSuiteInfo | TestInfo, id: string): TestSuiteInfo | TestInfo | undefined {
 	if (searchNode.id === id) {
 		return searchNode;
@@ -144,7 +149,7 @@ async function evaluateXML(
                 if(state === "failed")
                 {
                     const failure: any = tc.failure[0].$;
-                    message = failure.message;                    
+                    message = failure.message.replace(/\{newline\}/g, "\n");                    
                     decoration = [
                         {
                             line: Number.parseInt(message.split(":")[1]),

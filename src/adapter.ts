@@ -61,11 +61,10 @@ export class CppUTestAdapter implements TestAdapter {
 
 	}
 
-/*	implement this method if your TestAdapter supports debugging tests
-	async debug(tests: string[]): Promise<void> {
-		// start a test run in a child process and attach the debugger to it...
-	}
-*/
+	// async debug(tests: string[]): Promise<void> {
+	// 	// start a test run in a child process and attach the debugger to it...
+	// 	await debugTest(tests);
+	// }
 
 	cancel(): void {
 		killTestRun();
