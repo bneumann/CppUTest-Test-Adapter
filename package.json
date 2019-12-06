@@ -5,7 +5,7 @@
   "icon": "img/icon.png",
   "author": "Benjamin Giesinger <benjamin.giesinger@gmail.com>",
   "publisher": "bneumann",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "MIT",
   "homepage": "https://github.com/bneumann/CppUTest-Test-Adapter",
   "repository": {
@@ -63,6 +63,7 @@
           "type": "string",
           "scope": "resource"
         },
+        
         "cpputestExplorer.testExecutablePath": {
           "description": "path where the executable should be run in",
           "default": "",
