@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { TestAdapter, TestLoadStartedEvent, TestLoadFinishedEvent, TestRunStartedEvent, TestRunFinishedEvent, TestSuiteEvent, TestEvent, RetireEvent } from 'vscode-test-adapter-api';
 import { Log } from 'vscode-test-adapter-util';
-import { loadTests, runTests, killTestRun } from './cpputest'
+import { loadTests, runTests, killTestRun, getTestRunner } from './cpputest'
 import *  as fs from 'fs';
 
 export class CppUTestAdapter implements TestAdapter {
@@ -27,7 +27,7 @@ export class CppUTestAdapter implements TestAdapter {
 		this.disposables.push(this.testStatesEmitter);
 		this.disposables.push(this.autorunEmitter);
 
-		const runner: string | undefined = vscode.workspace.getConfiguration("cpputestExplorer").testExecutable;
+		const runner: string = getTestRunner();
 		fs.watchFile(<fs.PathLike>runner, (cur: fs.Stats, prev: fs.Stats) => {
 			if(cur.mtimeMs !== prev.mtimeMs)
 			{

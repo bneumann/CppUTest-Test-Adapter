@@ -9,8 +9,8 @@ let suite: CppUTestGroup;
 const processes: ChildProcess[] = Array<ChildProcess>();
 
 export function loadTests(): Promise<TestSuiteInfo> {
-    const runner: string | undefined = vscode.workspace.getConfiguration("cpputestExplorer").testExecutable;
-    const path: string | undefined = vscode.workspace.getConfiguration("cpputestExplorer").testExecutablePath;
+    const runner = getTestRunner();
+    const path = getTestPath();
 
     const command: string = runner ? runner : "";
 
@@ -84,8 +84,8 @@ async function runNode(
 
 		testStatesEmitter.fire(<TestEvent>{ type: 'test', test: node, state: 'running' });
 
-        const runner: string | undefined = vscode.workspace.getConfiguration("cpputestExplorer").testExecutable;
-        const path: string = vscode.workspace.getConfiguration("cpputestExplorer").testExecutablePath;
+        const runner: string = getTestRunner();
+        const path: string = getTestPath();
         let group: string, test: string;
         [group, test] = node.id.split(".");        
         const command: string = runner ? runner : "";
@@ -159,7 +159,7 @@ async function evaluateXML(
                 }
 
                 const testInfo = new CppUTest(testName, testGroup);
-                const path: string = vscode.workspace.getConfiguration("cpputestExplorer").testExecutablePath;
+                const path: string = getTestPath();
                 testInfo.file = path + testFile;
                 testInfo.line = testLine;
                 suite.updateTest(testInfo);
@@ -175,4 +175,40 @@ async function evaluateXML(
         });
     })
     return Promise.resolve(promise);
+}
+
+export function getTestRunner(): string
+{
+    const runner: string | undefined = vscode.workspace.getConfiguration("cpputestExplorer").testExecutable;
+    return resolveSettingsVariable(runner);
+}
+
+export function getTestPath(): string
+{
+    const path: string | undefined = vscode.workspace.getConfiguration("cpputestExplorer").testExecutablePath;
+    return resolveSettingsVariable(path);
+
+}
+
+/**
+ * This function converts some of the VSCode variables like workspaceFolder
+ * into their correspoing values. This is a workaround for https://github.com/microsoft/vscode/issues/46471
+ * @param input Input string from settings.json
+ */
+function resolveSettingsVariable(input: string | undefined) : string
+{
+    if(input)
+    {
+        const result: string[] | null = input.match(/\$\{(.*)\}/gmi);
+        if(result && result.length > 0)
+        {
+            input = input.replace(/(\$\{file\})/gmi, vscode.window.activeTextEditor ? vscode.window.activeTextEditor.document.uri.fsPath : "");
+            input = input.replace(/(\$\{workspaceFolder\})/gmi, vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders[0].uri.fsPath : "");
+        }
+        return input;
+    }
+    else
+    {
+        return "";
+    }   
 }
