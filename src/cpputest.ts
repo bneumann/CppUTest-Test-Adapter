@@ -21,7 +21,7 @@ export function loadTests(): Promise<TestSuiteInfo> {
                 reject(error);
             }
             const groupStrings: string[] = stdout.split(" ");
-            const groups = [...new Set(groupStrings.map(gs => gs.split(".")[0]))];            
+            const groups = [...new Set(groupStrings.map(gs => gs.split(".")[0]))];
             suite = new CppUTestGroup("CppuTest Suite");
             groups.forEach(g => suite.children.push(new CppUTestGroup(g)));
             groupStrings.forEach(gs => suite.TestGroups.forEach(tg => tg.addTest(gs)));
@@ -43,7 +43,7 @@ export async function runTests(
 	}
 }
 
-export function killTestRun() 
+export function killTestRun()
 {
     processes.forEach(p => p.kill("SIGTERM"));
 }
@@ -87,9 +87,9 @@ async function runNode(
         const runner: string = getTestRunner();
         const path: string = getTestPath();
         let group: string, test: string;
-        [group, test] = node.id.split(".");        
+        [group, test] = node.id.split(".");
         const command: string = runner ? runner : "";
-        
+
         const event: TestEvent = await runSingleCall(command, group, test, path);
         testStatesEmitter.fire(event);
 	}
@@ -103,7 +103,7 @@ async function runSingleCall(command: string, group: string, test: string, path:
                 resolve(Promise.resolve(<TestEvent>{type: 'test', test: suite.findTest(group+"."+test), state: 'errored', message: stderr }));
                 return;
             }
-            resolve(evaluateXML(group, path));            
+            resolve(evaluateXML(group, path));
         });
         processes.push(runProcess);
     });
@@ -115,6 +115,7 @@ async function evaluateXML(
     path: string)
 {
     const parser: xml2js.Parser = new xml2js.Parser();
+    path = path == "" ? "." : path;
     const fileName: string = path + "/cpputest_" + group + ".xml";
     if(!fs.existsSync(fileName))
     {
@@ -132,7 +133,7 @@ async function evaluateXML(
                 const testFile: string = tc.$.file;
                 const testLine: number = Number.parseInt(tc.$.line);
                 let state: TestEvent["state"];
-                if(tc.failure) 
+                if(tc.failure)
                 {
                     state = "failed";
                 }
@@ -143,13 +144,13 @@ async function evaluateXML(
                 else
                 {
                     state = "passed";
-                } 
+                }
                 let message: string = "";
                 let decoration: TestDecoration[] | undefined = undefined;
                 if(state === "failed")
                 {
                     const failure: any = tc.failure[0].$;
-                    message = failure.message.replace(/\{newline\}/g, "\n");                    
+                    message = failure.message.replace(/\{newline\}/g, "\n");
                     decoration = [
                         {
                             line: Number.parseInt(message.split(":")[1]),
@@ -210,5 +211,5 @@ function resolveSettingsVariable(input: string | undefined) : string
     else
     {
         return "";
-    }   
+    }
 }
