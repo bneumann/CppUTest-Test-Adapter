@@ -21,7 +21,7 @@ TEST(Specials, AnotherStuff)
 
 TEST(Specials, Crash)
 {
-  *(int*)0=0;
+  //*(int*)0=0;
 }
 
 IGNORE_TEST(SecondClass, ShouldBeIgnored)

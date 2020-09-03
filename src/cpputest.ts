@@ -32,57 +32,69 @@ export function loadTests(): Promise<TestSuiteInfo> {
 }
 
 export async function runTests(
-	tests: string[],
-	testStatesEmitter: vscode.EventEmitter<TestRunStartedEvent | TestRunFinishedEvent | TestSuiteEvent | TestEvent>
+    tests: string[],
+    testStatesEmitter: vscode.EventEmitter<TestRunStartedEvent | TestRunFinishedEvent | TestSuiteEvent | TestEvent>
 ): Promise<void> {
-	for (const suiteOrTestId of tests) {
-		const node = findNode(suite, suiteOrTestId);
-		if (node) {
-			await runNode(node, testStatesEmitter);
-		}
-	}
+    for (const suiteOrTestId of tests) {
+        const node = findNode(suite, suiteOrTestId);
+        if (node) {
+            await runNode(node, testStatesEmitter);
+        }
+    }
 }
 
-export function killTestRun()
-{
+export function killTestRun() {
     processes.forEach(p => p.kill("SIGTERM"));
 }
 
-export function debugTest(tests: string[])
-{
-    console.log(vscode.workspace);
+export function debugTest(tests: string[]) {
+    const config = getDebugConfiguration();
+    for (const suiteOrTestId of tests) {
+        const node = findNode(suite, suiteOrTestId);
+        if (node) {
+            console.log(config);
+            (config as any).name = node.id;
+            (config as any).args = ["-t", node.id];
+            //const debugSessionStarted = await vscode.debug.startDebugging(this.workspaceFolder, debugConfig);
+            if(vscode.workspace.workspaceFolders)
+            {
+                const debugSessionStarted = vscode.debug.startDebugging(vscode.workspace.workspaceFolders[0], config);
+                console.log(debugSessionStarted);
+            }
+        }
+    }
 }
 
 function findNode(searchNode: TestSuiteInfo | TestInfo, id: string): TestSuiteInfo | TestInfo | undefined {
-	if (searchNode.id === id) {
-		return searchNode;
-	} else if (searchNode.type === 'suite') {
-		for (const child of searchNode.children) {
-			const found = findNode(child, id);
-			if (found) return found;
-		}
-	}
-	return undefined;
+    if (searchNode.id === id) {
+        return searchNode;
+    } else if (searchNode.type === 'suite') {
+        for (const child of searchNode.children) {
+            const found = findNode(child, id);
+            if (found) return found;
+        }
+    }
+    return undefined;
 }
 
 async function runNode(
-	node: TestSuiteInfo | TestInfo,
-	testStatesEmitter: vscode.EventEmitter<TestRunStartedEvent | TestRunFinishedEvent | TestSuiteEvent | TestEvent>
+    node: TestSuiteInfo | TestInfo,
+    testStatesEmitter: vscode.EventEmitter<TestRunStartedEvent | TestRunFinishedEvent | TestSuiteEvent | TestEvent>
 ): Promise<void> {
 
-	if (node.type === 'suite') {
+    if (node.type === 'suite') {
 
-		testStatesEmitter.fire(<TestSuiteEvent>{ type: 'suite', suite: node, state: 'running' });
+        testStatesEmitter.fire(<TestSuiteEvent>{ type: 'suite', suite: node, state: 'running' });
 
-		for (const child of node.children) {
-			await runNode(child, testStatesEmitter);
-		}
+        for (const child of node.children) {
+            await runNode(child, testStatesEmitter);
+        }
 
-		testStatesEmitter.fire(<TestSuiteEvent>{ type: 'suite', suite: node, state: 'completed' });
+        testStatesEmitter.fire(<TestSuiteEvent>{ type: 'suite', suite: node, state: 'completed' });
 
-	} else { // node.type === 'test'
+    } else { // node.type === 'test'
 
-		testStatesEmitter.fire(<TestEvent>{ type: 'test', test: node, state: 'running' });
+        testStatesEmitter.fire(<TestEvent>{ type: 'test', test: node, state: 'running' });
 
         const runner: string = getTestRunner();
         const path: string = getTestPath();
@@ -92,15 +104,14 @@ async function runNode(
 
         const event: TestEvent = await runSingleCall(command, group, test, path);
         testStatesEmitter.fire(event);
-	}
+    }
 }
 
-async function runSingleCall(command: string, group: string, test: string, path: string)
-{
+async function runSingleCall(command: string, group: string, test: string, path: string) {
     const promise: Promise<TestEvent> = new Promise<TestEvent>((resolve, reject) => {
-        const runProcess: ChildProcess = execFile(command, ["-sg", group, "-sn", test, "-ojunit"], { cwd: path },  (error: any, stdout, stderr) => {
+        const runProcess: ChildProcess = execFile(command, ["-sg", group, "-sn", test, "-ojunit"], { cwd: path }, (error: any, stdout, stderr) => {
             if (error && error.code === null) {
-                resolve(Promise.resolve(<TestEvent>{type: 'test', test: suite.findTest(group+"."+test), state: 'errored', message: stderr }));
+                resolve(Promise.resolve(<TestEvent>{ type: 'test', test: suite.findTest(group + "." + test), state: 'errored', message: stderr }));
                 return;
             }
             resolve(evaluateXML(group, path));
@@ -112,14 +123,12 @@ async function runSingleCall(command: string, group: string, test: string, path:
 
 async function evaluateXML(
     group: string,
-    path: string)
-{
+    path: string) {
     const parser: xml2js.Parser = new xml2js.Parser();
     path = path == "" ? "." : path;
     const fileName: string = path + "/cpputest_" + group + ".xml";
-    if(!fs.existsSync(fileName))
-    {
-        return Promise.resolve(<TestEvent>{type: 'test', test: group, state: 'errored', message: "Test crashed" })
+    if (!fs.existsSync(fileName)) {
+        return Promise.resolve(<TestEvent>{ type: 'test', test: group, state: 'errored', message: "Test crashed" })
     }
     const xml: Buffer = fs.readFileSync(fileName);
     const promise: Promise<TestEvent> = new Promise<TestEvent>((resolve, reject) => {
@@ -133,22 +142,18 @@ async function evaluateXML(
                 const testFile: string = tc.$.file;
                 const testLine: number = Number.parseInt(tc.$.line);
                 let state: TestEvent["state"];
-                if(tc.failure)
-                {
+                if (tc.failure) {
                     state = "failed";
                 }
-                else if(tc.skipped)
-                {
+                else if (tc.skipped) {
                     state = "skipped";
                 }
-                else
-                {
+                else {
                     state = "passed";
                 }
                 let message: string = "";
                 let decoration: TestDecoration[] | undefined = undefined;
-                if(state === "failed")
-                {
+                if (state === "failed") {
                     const failure: any = tc.failure[0].$;
                     message = failure.message.replace(/\{newline\}/g, "\n");
                     decoration = [
@@ -178,14 +183,12 @@ async function evaluateXML(
     return Promise.resolve(promise);
 }
 
-export function getTestRunner(): string
-{
+export function getTestRunner(): string {
     const runner: string | undefined = vscode.workspace.getConfiguration("cpputestExplorer").testExecutable;
     return resolveSettingsVariable(runner);
 }
 
-export function getTestPath(): string
-{
+export function getTestPath(): string {
     const path: string | undefined = vscode.workspace.getConfiguration("cpputestExplorer").testExecutablePath;
     return resolveSettingsVariable(path);
 
@@ -196,20 +199,48 @@ export function getTestPath(): string
  * into their correspoing values. This is a workaround for https://github.com/microsoft/vscode/issues/46471
  * @param input Input string from settings.json
  */
-function resolveSettingsVariable(input: string | undefined) : string
-{
-    if(input)
-    {
+function resolveSettingsVariable(input: string | undefined): string {
+    if (input) {
         const result: string[] | null = input.match(/\$\{(.*)\}/gmi);
-        if(result && result.length > 0)
-        {
+        if (result && result.length > 0) {
             input = input.replace(/(\$\{file\})/gmi, vscode.window.activeTextEditor ? vscode.window.activeTextEditor.document.uri.fsPath : "");
             input = input.replace(/(\$\{workspaceFolder\})/gmi, vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders[0].uri.fsPath : "");
         }
         return input;
     }
-    else
-    {
+    else {
         return "";
     }
+}
+
+function getDebugConfiguration(): (vscode.DebugConfiguration | string) {
+    // Thanks to: https://github.com/matepek/vscode-catch2-test-adapter/blob/9a2e9f5880ef3907d80ff99f3d6d028270923c95/src/Configurations.ts#L125
+    if (vscode.workspace.workspaceFolders === undefined) {
+        return "";
+    }
+    const wpLaunchConfigs: string | undefined = vscode.workspace
+        .getConfiguration('launch', vscode.workspace.workspaceFolders[0].uri)
+        .get<string>('configurations');
+    if (wpLaunchConfigs && Array.isArray(wpLaunchConfigs) && wpLaunchConfigs.length > 0) {
+        for (let i = 0; i < wpLaunchConfigs.length; ++i) {
+            if (IsCCppDebugger(wpLaunchConfigs[i])) {
+                // putting as much known properties as much we can and hoping for the best 🤞
+                const debugConfig: vscode.DebugConfiguration = Object.assign({}, wpLaunchConfigs[i], {
+                    name: '${label} (${suiteLabel})',
+                    program: getTestRunner(),
+                    target: getTestRunner()
+                });
+                return debugConfig;
+            }
+        }
+    }
+    return "";
+}
+
+function IsCCppDebugger(config: any){
+    return config.request == 'launch' &&
+        typeof config.type == 'string' &&
+        (config.type.startsWith('cpp') ||
+            config.type.startsWith('lldb') ||
+            config.type.startsWith('gdb'));
 }
