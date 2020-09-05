@@ -47,19 +47,22 @@ export function killTestRun() {
     processes.forEach(p => p.kill("SIGTERM"));
 }
 
-export function debugTest(tests: string[]) {
+export async function debugTest(tests: string[]) {
     const config = getDebugConfiguration();
+    if(config === "")
+    {
+        throw new Error("No debug configuration found. Not able to debug!");
+    }
     for (const suiteOrTestId of tests) {
         const node = findNode(suite, suiteOrTestId);
         if (node) {
             console.log(config);
             (config as any).name = node.id;
-            (config as any).args = ["-t", node.id];
-            //const debugSessionStarted = await vscode.debug.startDebugging(this.workspaceFolder, debugConfig);
+            const arg: string = node.id.search(/\./) >= 0 ? "-t" : "-sg";
+            (config as any).args = [arg, node.id];
             if(vscode.workspace.workspaceFolders)
             {
-                const debugSessionStarted = vscode.debug.startDebugging(vscode.workspace.workspaceFolders[0], config);
-                console.log(debugSessionStarted);
+                await vscode.debug.startDebugging(vscode.workspace.workspaceFolders[0], config);
             }
         }
     }
@@ -224,9 +227,7 @@ function getDebugConfiguration(): (vscode.DebugConfiguration | string) {
     if (wpLaunchConfigs && Array.isArray(wpLaunchConfigs) && wpLaunchConfigs.length > 0) {
         for (let i = 0; i < wpLaunchConfigs.length; ++i) {
             if (IsCCppDebugger(wpLaunchConfigs[i])) {
-                // putting as much known properties as much we can and hoping for the best 🤞
                 const debugConfig: vscode.DebugConfiguration = Object.assign({}, wpLaunchConfigs[i], {
-                    name: '${label} (${suiteLabel})',
                     program: getTestRunner(),
                     target: getTestRunner()
                 });
@@ -241,6 +242,6 @@ function IsCCppDebugger(config: any){
     return config.request == 'launch' &&
         typeof config.type == 'string' &&
         (config.type.startsWith('cpp') ||
-            config.type.startsWith('lldb') ||
-            config.type.startsWith('gdb'));
+         config.type.startsWith('lldb') ||
+         config.type.startsWith('gdb'));
 }
