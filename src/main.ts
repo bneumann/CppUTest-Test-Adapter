@@ -19,7 +19,6 @@ export async function activate(context: vscode.ExtensionContext) {
 	if (testExplorerExtension) {
 
 		const testHub = testExplorerExtension.exports;
-
 		// this will register an CppUTestTestAdapter for each WorkspaceFolder
 		context.subscriptions.push(new TestAdapterRegistrar(
 			testHub,

@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { TestAdapter, TestLoadStartedEvent, TestLoadFinishedEvent, TestRunStartedEvent, TestRunFinishedEvent, TestSuiteEvent, TestEvent, RetireEvent } from 'vscode-test-adapter-api';
 import { Log } from 'vscode-test-adapter-util';
-import { loadTests, runTests, killTestRun, getTestRunner } from './cpputest'
+import { loadTests, runTests, killTestRun, getTestRunner, debugTest } from './cpputest'
 import *  as fs from 'fs';
 
 export class CppUTestAdapter implements TestAdapter {
@@ -61,10 +61,10 @@ export class CppUTestAdapter implements TestAdapter {
 
 	}
 
-	// async debug(tests: string[]): Promise<void> {
-	// 	// start a test run in a child process and attach the debugger to it...
-	// 	await debugTest(tests);
-	// }
+	async debug(tests: string[]): Promise<void> {
+		// start a test run in a child process and attach the debugger to it...
+		await debugTest(tests);
+	}
 
 	cancel(): void {
 		killTestRun();
