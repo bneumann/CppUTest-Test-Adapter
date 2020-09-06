@@ -4,3 +4,8 @@ package-lock.json
 tsconfig.json
 .vscode/**
 .gitignore
+*.vsix
+build
+build_linux
+bin
+CMakeLists.txt
