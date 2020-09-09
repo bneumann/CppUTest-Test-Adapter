@@ -4,6 +4,7 @@ import { TestSuiteInfo, TestInfo, TestRunStartedEvent, TestRunFinishedEvent, Tes
 import { CppUTest, CppUTestGroup } from './CppUTestImplementation';
 import * as xml2js from 'xml2js';
 import * as fs from 'fs';
+import * as pathModule from 'path';
 
 let suite: CppUTestGroup;
 const processes: ChildProcess[] = Array<ChildProcess>();
@@ -23,11 +24,17 @@ export function loadTests(): Promise<TestSuiteInfo> {
             const groupStrings: string[] = stdout.split(" ");
             const groups = [...new Set(groupStrings.map(gs => gs.split(".")[0]))];
             suite = new CppUTestGroup("CppuTest Suite");
-            groups.forEach(g => suite.children.push(new CppUTestGroup(g)));
-            groupStrings.forEach(gs => suite.TestGroups.forEach(tg => tg.addTest(gs)));
+            // This will group all tests in a sub group so they can be run at once
+            const subSuite: CppUTestGroup = new CppUTestGroup("Sub Suite");
+            suite.children.push(subSuite);
+            groups.forEach(g => subSuite.children.push(new CppUTestGroup(g)));
+            groupStrings.forEach(gs => subSuite.TestGroups.forEach(tg => tg.addTest(gs)));
             resolve(suite);
         })
     });
+    promise.then((suite) => {
+        suite.children[0].label = pathModule.basename(runner);
+    })
     return Promise.resolve<TestSuiteInfo>(promise);
 }
 
