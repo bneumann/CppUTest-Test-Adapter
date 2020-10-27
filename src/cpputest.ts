@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { execFile, ChildProcess } from 'child_process';
+import { exec, execFile, ChildProcess } from 'child_process';
 import { TestSuiteInfo, TestInfo, TestRunStartedEvent, TestRunFinishedEvent, TestSuiteEvent, TestEvent, TestDecoration } from 'vscode-test-adapter-api';
 import { CppUTest, CppUTestGroup } from './CppUTestImplementation';
 import * as xml2js from 'xml2js';
@@ -16,7 +16,7 @@ export function loadTests(): Promise<TestSuiteInfo> {
     const command: string = runner ? runner : "";
 
     const promise = new Promise<TestSuiteInfo>((resolve, reject) => {
-        execFile(command, ["-ln"], { cwd: path }, (error, stdout, stderr) => {
+        execFile(command, ["-ln"], { cwd: path }, async (error, stdout, stderr) => {
             if (error) {
                 console.error('stderr', stderr);
                 reject(error);
@@ -28,14 +28,48 @@ export function loadTests(): Promise<TestSuiteInfo> {
             const subSuite: CppUTestGroup = new CppUTestGroup("Sub Suite");
             suite.children.push(subSuite);
             groups.forEach(g => subSuite.children.push(new CppUTestGroup(g)));
-            groupStrings.forEach(gs => subSuite.TestGroups.forEach(tg => tg.addTest(gs)));
+
+            for(let i: number = 0; i < groupStrings.length; i++)
+            {
+                const gs = groupStrings[i];
+                for(let j: number = 0; j < subSuite.TestGroups.length; j++)
+                {
+                    const tg: CppUTestGroup = subSuite.TestGroups[j];
+                    const group = gs.split(".")[0];
+                    const test = gs.split(".")[1];
+                    const value = await getLineAndFile(command, path, group, test);
+                    tg.addTest(gs, value.file, value.line)
+                }
+            }
             resolve(suite);
         })
     });
+
     promise.then((suite) => {
         suite.children[0].label = pathModule.basename(runner);
     })
     return Promise.resolve<TestSuiteInfo>(promise);
+}
+
+async function getLineAndFile(command: string, path: string, group: string, test: string): Promise<{file?: string, line?: number}>
+{
+    // Linux:
+    const sourceGrep = `objdump -lSd ${command} | grep -m 1 -A 2 TEST_${group}_${test}`;
+    // Windows:
+    // const sourceGrep = `windObjDumpOrWhatEver ${command} | findstr TEST_${group}_${test}`
+    return new Promise<{file?: string, line?: number}>((resolve, reject) => {
+        exec(sourceGrep, { cwd: path }, (error, stdout, stderr) => {
+            if (error) {
+                console.error('stderr', error.cmd);
+                resolve({file: undefined, line: undefined});
+            } else {
+                const debugSymbols: string[] = stdout.split("\n")[2].split(":");
+                const file = debugSymbols[0];
+                const line = parseInt(debugSymbols[1], 10) - 2; // show it above the test
+                resolve({file, line});
+            }
+        });
+    })
 }
 
 export async function runTests(
@@ -63,7 +97,6 @@ export async function debugTest(tests: string[]) {
     for (const suiteOrTestId of tests) {
         const node = findNode(suite, suiteOrTestId);
         if (node) {
-            console.log(config);
             (config as any).name = node.id;
             const arg: string = node.id.search(/\./) >= 0 ? "-t" : "-sg";
             (config as any).args = [arg, node.id];
