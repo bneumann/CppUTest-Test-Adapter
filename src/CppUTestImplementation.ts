@@ -85,7 +85,5 @@ export class CppUTest implements TestInfo {
         this.type = "test";
         this.id = groupString + "." + testString;
         this.label = testString;
-        this.file = "C:\\Users\\benni\\Documents\\CppUTest-Test-Adapter\\test\\basicTests.cpp";
-        this.line = 50;
     }
 }
