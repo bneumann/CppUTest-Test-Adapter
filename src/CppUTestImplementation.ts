@@ -1,7 +1,6 @@
 import { TestSuiteInfo, TestInfo } from 'vscode-test-adapter-api';
 
-export class CppUTestGroup implements TestSuiteInfo 
-{
+export class CppUTestGroup implements TestSuiteInfo {
     type: "suite";
     id: string;
     label: string;
@@ -11,64 +10,59 @@ export class CppUTestGroup implements TestSuiteInfo
     line?: number | undefined;
     children: (TestSuiteInfo | TestInfo)[];
 
-    constructor(inputString: string)
-    {
+    constructor(inputString: string) {
         this.type = "suite";
         this.id = inputString;
         this.label = inputString;
         this.children = new Array<CppUTest | CppUTestGroup>();
     }
 
-    addTest(inputString: string)
+    addTest(inputString: string, file?: string, line?: number)
     {
         if(inputString.indexOf("."))
         {
             const stringSplit = inputString.split(".");
             if(stringSplit[0] === this.label)
             {
-                this.children.push(new CppUTest(stringSplit[1], stringSplit[0]));
+                const test: CppUTest = new CppUTest(stringSplit[1], stringSplit[0])
+                test.file = file;
+                test.line = line;
+                this.children.push(test);
             }
         }
     }
 
-    findTest(label: string): CppUTest | undefined
-    {
-        if(label.indexOf("."))
-        {
+    findTest(label: string): CppUTest | undefined {
+        if (label.indexOf(".")) {
             return this.Tests.find(t => t.id === label)
         }
         return undefined;
     }
 
-    updateTest(test: CppUTest)
-    {
+    updateTest(test: CppUTest) {
         let oldTest: CppUTest | undefined = this.findTest(test.label);
-        if(oldTest)
-        {
+        if (oldTest) {
             oldTest = test;
         }
     }
 
-    get Tests(): CppUTest[]
-    {
+    get Tests(): CppUTest[] {
         const retVal: CppUTest[] = new Array<CppUTest>();
         this.children.forEach(c => {
-            if(c instanceof CppUTest){
+            if (c instanceof CppUTest) {
                 retVal.push(c);
-            } 
-            else
-            {
+            }
+            else {
                 retVal.push(...(<CppUTestGroup>c).Tests);
             }
         })
         return retVal;
     }
 
-    get TestGroups(): CppUTestGroup[]
-    {
+    get TestGroups(): CppUTestGroup[] {
         const retVal: CppUTestGroup[] = new Array<CppUTestGroup>();
         this.children.forEach(c => {
-            if(c instanceof CppUTestGroup){
+            if (c instanceof CppUTestGroup) {
                 retVal.push(c);
             }
         })
@@ -76,9 +70,8 @@ export class CppUTestGroup implements TestSuiteInfo
     }
 }
 
-export class CppUTest implements TestInfo
-{
-    type: "test";    
+export class CppUTest implements TestInfo {
+    type: "test";
     id: string;
     label: string;
     description?: string | undefined;
@@ -87,11 +80,10 @@ export class CppUTest implements TestInfo
     line?: number | undefined;
     skipped?: boolean | undefined;
 
-    
-    constructor(testString: string, groupString: string)
-    {
+
+    constructor(testString: string, groupString: string) {
         this.type = "test";
         this.id = groupString + "." + testString;
         this.label = testString;
-    }  
+    }
 }
