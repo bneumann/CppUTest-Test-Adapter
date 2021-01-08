@@ -1,6 +1,6 @@
 # CppUTest Test Adapter for Visual Studio Code
 
-This is the implementation for a [CppUTest](https://cpputest.github.io/) Test Adapter for VSCode.
+This is the implementation for a [CppUTest](https://cpputest.github.io/) Test Adapter for VSCode. Check it out on the VSCode Market Place: [CppUTest Adapter](https://marketplace.visualstudio.com/items?itemName=bneumann.cpputest-test-adapter)
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/B0B836FAL)
 
