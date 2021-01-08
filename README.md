@@ -2,6 +2,8 @@
 
 This is the implementation for a [CppUTest](https://cpputest.github.io/) Test Adapter for VSCode.
 
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/B0B836FAL)
+
 ![tests](img/tests.png)
 
 ## Setup
