@@ -1,12 +1,13 @@
 import * as vscode from 'vscode';
 import { TestAdapter, TestLoadStartedEvent, TestLoadFinishedEvent, TestRunStartedEvent, TestRunFinishedEvent, TestSuiteEvent, TestEvent, RetireEvent } from 'vscode-test-adapter-api';
 import { Log } from 'vscode-test-adapter-util';
-import { loadTests, runTests, killTestRun, getTestRunner, debugTest } from './cpputest'
+import { Resolver } from './cpputest'
 import *  as fs from 'fs';
 
 export class CppUTestAdapter implements TestAdapter {
 
 	private disposables: { dispose(): void }[] = [];
+	private testResolver: Resolver;
 
 	private readonly testsEmitter = new vscode.EventEmitter<TestLoadStartedEvent | TestLoadFinishedEvent>();
 	private readonly testStatesEmitter = new vscode.EventEmitter<TestRunStartedEvent | TestRunFinishedEvent | TestSuiteEvent | TestEvent>();
@@ -22,12 +23,13 @@ export class CppUTestAdapter implements TestAdapter {
 	) {
 
 		this.log.info('Initializing adapter');
+		this.testResolver = new Resolver(this.log);
 
 		this.disposables.push(this.testsEmitter);
 		this.disposables.push(this.testStatesEmitter);
 		this.disposables.push(this.autorunEmitter);
 
-		const runner: string = getTestRunner();
+		const runner: string = this.testResolver.getTestRunner();
 		fs.watchFile(<fs.PathLike>runner, (cur: fs.Stats, prev: fs.Stats) => {
 			if(cur.mtimeMs !== prev.mtimeMs)
 			{
@@ -44,7 +46,7 @@ export class CppUTestAdapter implements TestAdapter {
 		this.testsEmitter.fire(<TestLoadStartedEvent>{ type: 'started' });
 		this.log.info('Loading tests');
 
-		const loadedTests = await loadTests();
+		const loadedTests = await this.testResolver.loadTests();
 		this.log.info('Tests loaded');
 
 		this.testsEmitter.fire(<TestLoadFinishedEvent>{ type: 'finished', suite: loadedTests });
@@ -55,7 +57,7 @@ export class CppUTestAdapter implements TestAdapter {
 
 		this.testStatesEmitter.fire(<TestRunStartedEvent>{ type: 'started', tests });
 		this.log.info('Running tests');
-		await runTests(tests, this.testStatesEmitter);
+		await this.testResolver.runTests(tests, this.testStatesEmitter);
 		this.log.info('Done');
 		this.testStatesEmitter.fire(<TestRunFinishedEvent>{ type: 'finished' });
 
@@ -63,11 +65,11 @@ export class CppUTestAdapter implements TestAdapter {
 
 	async debug(tests: string[]): Promise<void> {
 		// start a test run in a child process and attach the debugger to it...
-		await debugTest(tests);
+		await this.testResolver.debugTest(tests);
 	}
 
 	cancel(): void {
-		killTestRun();
+		this.testResolver.killTestRun();
 		this.testStatesEmitter.fire(<TestRunFinishedEvent>{ type: 'finished' });
 	}
 

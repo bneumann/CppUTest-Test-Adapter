@@ -13,6 +13,10 @@ TEST_GROUP(ClassName)
 {
 };
 
+TEST_GROUP(Special_characters)
+{
+};
+
 
 TEST(Specials, AnotherStuff)
 {
@@ -22,6 +26,11 @@ TEST(Specials, AnotherStuff)
 TEST(Specials, Crash)
 {
   //*(int*)0=0;
+}
+
+TEST(Special_characters, in_test_name)
+{
+  CHECK_TEXT(true, "This works");
 }
 
 IGNORE_TEST(SecondClass, ShouldBeIgnored)
