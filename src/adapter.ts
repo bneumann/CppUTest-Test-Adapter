@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { TestAdapter, TestLoadStartedEvent, TestLoadFinishedEvent, TestRunStartedEvent, TestRunFinishedEvent, TestSuiteEvent, TestEvent, RetireEvent } from 'vscode-test-adapter-api';
 import { Log } from 'vscode-test-adapter-util';
-import { Resolver } from './cpputest'
+import { Resolver } from './TestResolver'
 import *  as fs from 'fs';
 
 export class CppUTestAdapter implements TestAdapter {
