@@ -45,7 +45,13 @@ export class Resolver {
                         const group = gs.split(".")[0];
                         const test = gs.split(".")[1];
                         this.logger.info(`Adding ${test} to group ${group}`);
-                        const value = await this.getLineAndFile(command, path, group, test);
+                        let value: {file?: string | undefined, line?: number | undefined};
+                        try {
+                            value = await this.getLineAndFile(command, path, group, test);
+                        } catch (error) {
+                            this.logger.error(`Resolving failed: ${error}`);
+                            value = {file: undefined, line: undefined};
+                        }
                         tg.addTest(gs, value.file, value.line)
                     }
                 }

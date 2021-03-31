@@ -28,10 +28,16 @@ TEST(Specials, Crash)
   //*(int*)0=0;
 }
 
-TEST(Special_characters, in_test_name)
+TEST(Special_characters, in_test_name2)
 {
   CHECK_TEXT(true, "This works");
 }
+
+TEST(Special_characters, in_test_name3)
+{
+  CHECK_TEXT(true, "This works2");
+}
+
 
 IGNORE_TEST(SecondClass, ShouldBeIgnored)
 {
