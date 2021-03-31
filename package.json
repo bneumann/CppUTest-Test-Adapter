@@ -5,7 +5,7 @@
   "icon": "img/icon.png",
   "author": "Benjamin Giesinger <benjamin.giesinger@gmail.com>",
   "publisher": "bneumann",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "license": "MIT",
   "homepage": "https://github.com/bneumann/CppUTest-Test-Adapter",
   "repository": {
