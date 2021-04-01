@@ -47,7 +47,14 @@ export class Resolver {
                         this.logger.info(`Adding ${test} to group ${group}`);
                         let value: {file?: string | undefined, line?: number | undefined};
                         try {
-                            value = await this.getLineAndFile(command, path, group, test);
+                            if(!this.isDebuggingEnabled())
+                            {
+                                this.logger.info(`Resolving debug information is disabled, skipping test ${test}`);
+                                value = {file: undefined, line: undefined};
+                            } else {
+                                this.logger.info(`Resolving debug information is enabled, analyzing test ${test}`);
+                                value = await this.getLineAndFile(command, path, group, test);
+                            }
                         } catch (error) {
                             this.logger.error(`Resolving failed: ${error}`);
                             value = {file: undefined, line: undefined};
@@ -102,6 +109,10 @@ export class Resolver {
     }
 
     public async debugTest(tests: string[]) {
+        if(!this.isDebuggingEnabled())
+        {
+            return;
+        }
         const config = this.getDebugConfiguration();
         if (config === "") {
             throw new Error("No debug configuration found. Not able to debug!");
@@ -204,7 +215,10 @@ export class Resolver {
     public getTestPath(): string {
         const path: string | undefined = vscode.workspace.getConfiguration("cpputestExplorer").testExecutablePath;
         return this.resolveSettingsVariable(path);
+    }
 
+    private isDebuggingEnabled(): boolean {
+        return !vscode.workspace.getConfiguration("cpputestExplorer").disableDebug;
     }
 
     /**

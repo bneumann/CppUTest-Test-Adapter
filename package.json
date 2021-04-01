@@ -69,6 +69,11 @@
           "type": "string",
           "scope": "resource"
         },
+        "cpputestExplorer.disableDebug": {
+          "description": "to get information about debugging, the adapter needs to analyze the binaries using objdump. If that is a problem disable it",
+          "type": "boolean",
+          "scope": "resource"
+        },
         "cpputestExplorer.logpanel": {
           "description": "write diagnotic logs to an output panel",
           "type": "boolean",
