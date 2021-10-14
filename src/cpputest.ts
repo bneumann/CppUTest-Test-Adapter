@@ -49,7 +49,7 @@ export function loadTests(): Promise<TestSuiteInfo> {
 
 async function getLineAndFile(command: string, path: string, group: string, test: string): Promise<{ file?: string, line?: number }> {
     // Linux:
-    const sourceGrep = `objdump -lSd ${command} | grep -m 1 -A 2 TEST_${group}_${test}`;
+    const sourceGrep = `objdump -lSd ${command} | grep -m 2 -A 2 TEST_${group}_${test}`;
     // Windows:
     // const sourceGrep = `windObjDumpOrWhatEver ${command} | findstr TEST_${group}_${test}`
     return new Promise<{ file?: string, line?: number }>((resolve, reject) => {
