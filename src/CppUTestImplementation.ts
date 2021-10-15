@@ -27,7 +27,7 @@ export class CppUTestGroup implements TestSuiteInfo {
                 const test: CppUTest = new CppUTest(stringSplit[1], stringSplit[0])
                 test.file = file;
                 test.line = line;
-                this.children.push(test);
+                this.children.unshift(test);
             }
         }
     }
