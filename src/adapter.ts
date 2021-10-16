@@ -32,7 +32,7 @@ export class CppUTestAdapter implements TestAdapter {
 			if (cur.mtimeMs !== prev.mtimeMs) {
 				this.log.info("Executable changed, updating test cases");
 				this.load();
-				this.autorunEmitter.fire();
+				// this.autorunEmitter.fire();
 			}
 		}));
 	}
