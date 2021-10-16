@@ -3,17 +3,30 @@ import { exec, execFile, ChildProcess } from 'child_process';
 import { TestSuiteInfo, TestInfo, TestRunStartedEvent, TestRunFinishedEvent, TestSuiteEvent, TestEvent } from 'vscode-test-adapter-api';
 import { CppUTest, CppUTestGroup } from './CppUTestImplementation';
 import * as pathModule from 'path';
+import { glob } from 'glob';
 
-let suite: CppUTestGroup;
 const processes: ChildProcess[] = Array<ChildProcess>();
+const mainSuite: CppUTestGroup = new CppUTestGroup("Main Suite");
 
 export function loadTests(): Promise<TestSuiteInfo> {
-    const runner = getTestRunner();
-    const path = getTestPath();
+    return new Promise<TestSuiteInfo>((resolve, reject) => {
+        const runners = getTestRunners();
+        const path = getTestPath();
 
-    const command: string = runner ? runner : "";
+        const testSuitePromises = runners.map(runner => {
+            return CreateSuiteFromExecutable(runner, path);
+        });
+        Promise.all(testSuitePromises)
+            .then((suites) => {
+                mainSuite.children = suites;
+                resolve(mainSuite);
+            })
+            .catch(err => reject(err));
+    });
+}
 
-    const promise = new Promise<TestSuiteInfo>((resolve, reject) => {
+function CreateSuiteFromExecutable(command: string, path: string): Promise<TestSuiteInfo> {
+    return new Promise<TestSuiteInfo>((resolve, reject) => {
         execFile(command, ["-ln"], { cwd: path }, async (error, stdout, stderr) => {
             if (error) {
                 console.error('stderr', stderr);
@@ -21,11 +34,9 @@ export function loadTests(): Promise<TestSuiteInfo> {
             }
             const groupStrings: string[] = stdout.split(" ");
             const groups = [...new Set(groupStrings.map(gs => gs.split(".")[0]))];
-            suite = new CppUTestGroup("CppuTest Suite");
             // This will group all tests in a sub group so they can be run at once
-            const subSuite: CppUTestGroup = new CppUTestGroup("Sub Suite");
-            suite.children.push(subSuite);
-            groups.forEach(g => subSuite.children.push(new CppUTestGroup(g)));
+            const subSuite: CppUTestGroup = new CppUTestGroup(pathModule.basename(command), command);
+            groups.forEach(g => subSuite.children.push(new CppUTestGroup(g, command)));
 
             for (let i: number = 0; i < groupStrings.length; i++) {
                 const gs = groupStrings[i];
@@ -34,17 +45,12 @@ export function loadTests(): Promise<TestSuiteInfo> {
                     const group = gs.split(".")[0];
                     const test = gs.split(".")[1];
                     const value = await getLineAndFile(command, path, group, test);
-                    tg.addTest(gs, value.file, value.line)
+                    tg.addTest(gs, value.file, value.line);
                 }
             }
-            resolve(suite);
-        })
+            resolve(subSuite);
+        });
     });
-
-    promise.then((suite) => {
-        suite.children[0].label = pathModule.basename(runner);
-    })
-    return Promise.resolve<TestSuiteInfo>(promise);
 }
 
 async function getLineAndFile(command: string, path: string, group: string, test: string): Promise<{ file?: string, line?: number }> {
@@ -72,7 +78,7 @@ export async function runTests(
     testStatesEmitter: vscode.EventEmitter<TestRunStartedEvent | TestRunFinishedEvent | TestSuiteEvent | TestEvent>
 ): Promise<void> {
     for (const suiteOrTestId of tests) {
-        const node = findNode(suite, suiteOrTestId);
+        const node = findNode(mainSuite, suiteOrTestId);
         if (node) {
             await runNode(node, testStatesEmitter);
         }
@@ -89,7 +95,7 @@ export async function debugTest(tests: string[]) {
         throw new Error("No debug configuration found. Not able to debug!");
     }
     for (const suiteOrTestId of tests) {
-        const node = findNode(suite, suiteOrTestId);
+        const node = findNode(mainSuite, suiteOrTestId);
         if (node) {
             (config as any).name = node.id;
             const arg: string = node.id.search(/\./) >= 0 ? "-t" : "-sg";
@@ -132,7 +138,7 @@ async function runNode(
 
         testStatesEmitter.fire(<TestEvent>{ type: 'test', test: node, state: 'running' });
 
-        const runner: string = getTestRunner();
+        const runner: string = getTestRunners()[0];
         const path: string = getTestPath();
         let group: string, test: string;
         [group, test] = node.id.split(".");
@@ -147,7 +153,7 @@ async function runSingleCall(command: string, group: string, test: string, path:
     const promise: Promise<TestEvent> = new Promise<TestEvent>((resolve, reject) => {
         const runProcess: ChildProcess = execFile(command, ["-sg", group, "-sn", test, "-v"], { cwd: path }, (error: any, stdout, stderr) => {
             if (error && error.code === null) {
-                resolve(Promise.resolve(<TestEvent>{ type: 'test', test: suite.findTest(group + "." + test), state: 'errored', message: stderr }));
+                resolve(Promise.resolve(<TestEvent>{ type: 'test', test: mainSuite.findTest(group + "." + test), state: 'errored', message: stderr }));
                 return;
             }
             const regexPattern: RegExp = /(\w*)_*TEST\((\w*), (\w*)\)(.*?)- (\d*) ms/gs;
@@ -160,8 +166,7 @@ async function runSingleCall(command: string, group: string, test: string, path:
                 if (result[1] == "IGNORE_") {
                     state = "skipped";
                 }
-                if(result[4].trim())
-                {
+                if (result[4].trim()) {
                     state = "failed";
                 }
                 console.log(result);
@@ -182,15 +187,27 @@ async function runSingleCall(command: string, group: string, test: string, path:
 }
 
 
-export function getTestRunner(): string {
+export function getTestRunners(): string[] {
     const runner: string | undefined = vscode.workspace.getConfiguration("cpputestExplorer").testExecutable;
-    return resolveSettingsVariable(runner);
+    const runners: string[] = splitRunners(runner);
+    return runners.map(runner => resolveSettingsVariable(runner));
 }
 
 export function getTestPath(): string {
     const path: string | undefined = vscode.workspace.getConfiguration("cpputestExplorer").testExecutablePath;
     return resolveSettingsVariable(path);
 
+}
+
+function splitRunners(executablesString: string | undefined): string[] {
+    if (executablesString) {
+        return executablesString
+            .split(";")
+            .map(r => glob.sync(r))
+            .reduce((flatten, arr) => [...flatten, ...arr]);
+    } else {
+        return [];
+    }
 }
 
 /**
@@ -224,8 +241,8 @@ function getDebugConfiguration(): (vscode.DebugConfiguration | string) {
         for (let i = 0; i < wpLaunchConfigs.length; ++i) {
             if (IsCCppDebugger(wpLaunchConfigs[i])) {
                 const debugConfig: vscode.DebugConfiguration = Object.assign({}, wpLaunchConfigs[i], {
-                    program: getTestRunner(),
-                    target: getTestRunner()
+                    program: getTestRunners(),
+                    target: getTestRunners()
                 });
                 return debugConfig;
             }

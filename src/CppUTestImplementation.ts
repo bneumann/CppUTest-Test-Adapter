@@ -9,12 +9,14 @@ export class CppUTestGroup implements TestSuiteInfo {
     file?: string | undefined;
     line?: number | undefined;
     children: (TestSuiteInfo | TestInfo)[];
+    executable: string | undefined;
 
-    constructor(inputString: string) {
+    constructor(inputString: string, executable: string | undefined = undefined) {
         this.type = "suite";
         this.id = inputString;
         this.label = inputString;
         this.children = new Array<CppUTest | CppUTestGroup>();
+        this.executable = executable;
     }
 
     addTest(inputString: string, file?: string, line?: number)
@@ -79,7 +81,6 @@ export class CppUTest implements TestInfo {
     file?: string | undefined;
     line?: number | undefined;
     skipped?: boolean | undefined;
-
 
     constructor(testString: string, groupString: string) {
         this.type = "test";

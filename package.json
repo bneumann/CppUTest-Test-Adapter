@@ -33,12 +33,14 @@
   },
   "dependencies": {
     "@types/xml2js": "^0.4.5",
+    "glob": "^7.2.0",
     "tslib": "^1.9.3",
     "vscode-test-adapter-api": "^1.9.0",
     "vscode-test-adapter-util": "^0.7.1",
     "xml2js": "^0.4.22"
   },
   "devDependencies": {
+    "@types/glob": "^7.1.4",
     "@types/vscode": "~1.23.0",
     "typescript": "^3.5.3",
     "vsce": "^1.72.0"
@@ -58,7 +60,7 @@
       "title": "CppUTest Explorer configuration",
       "properties": {
         "cpputestExplorer.testExecutable": {
-          "description": "executable that contains all tests",
+          "description": "executable that contains all tests. Can be multiple executables separated by semicolon. Wildcard is supported (e.g. myExecutable;bin/test/ut_*)",
           "default": "",
           "type": "string",
           "scope": "resource"
