@@ -1,4 +1,6 @@
 import { TestSuiteInfo, TestInfo } from 'vscode-test-adapter-api';
+import { CppUTest } from "./CppUTest";
+
 
 export class CppUTestGroup implements TestSuiteInfo {
     type: "suite";
@@ -19,24 +21,14 @@ export class CppUTestGroup implements TestSuiteInfo {
         this.executable = executable;
     }
 
-    addTest(inputString: string, file?: string, line?: number)
-    {
-        if(inputString.indexOf("."))
-        {
-            const stringSplit = inputString.split(".");
-            if(stringSplit[0] === this.label)
-            {
-                const test: CppUTest = new CppUTest(stringSplit[1], stringSplit[0])
-                test.file = file;
-                test.line = line;
-                this.children.unshift(test);
-            }
-        }
+    addTest(testName: string, file?: string, line?: number) {
+        const test: CppUTest = new CppUTest(testName, file, line);
+        this.children.unshift(test);
     }
 
     findTest(label: string): CppUTest | undefined {
         if (label.indexOf(".")) {
-            return this.Tests.find(t => t.id === label)
+            return this.Tests.find(t => t.id === label);
         }
         return undefined;
     }
@@ -57,7 +49,7 @@ export class CppUTestGroup implements TestSuiteInfo {
             else {
                 retVal.push(...(<CppUTestGroup>c).Tests);
             }
-        })
+        });
         return retVal;
     }
 
@@ -67,24 +59,7 @@ export class CppUTestGroup implements TestSuiteInfo {
             if (c instanceof CppUTestGroup) {
                 retVal.push(c);
             }
-        })
+        });
         return retVal;
-    }
-}
-
-export class CppUTest implements TestInfo {
-    type: "test";
-    id: string;
-    label: string;
-    description?: string | undefined;
-    tooltip?: string | undefined;
-    file?: string | undefined;
-    line?: number | undefined;
-    skipped?: boolean | undefined;
-
-    constructor(testString: string, groupString: string) {
-        this.type = "test";
-        this.id = groupString + "." + testString;
-        this.label = testString;
     }
 }

@@ -1,8 +1,14 @@
 import * as vscode from 'vscode';
 import { TestAdapter, TestLoadStartedEvent, TestLoadFinishedEvent, TestRunStartedEvent, TestRunFinishedEvent, TestSuiteEvent, TestEvent, RetireEvent } from 'vscode-test-adapter-api';
 import { Log } from 'vscode-test-adapter-util';
-import { loadTests, runTests, killTestRun, getTestRunners, debugTest } from './cpputest'
+import { runTests, killTestRun, getTestRunners, debugTest } from './legacyWrapper'
 import *  as fs from 'fs';
+import { exec, execFile } from "child_process";
+
+import CppUTestContainer from "./CppUTestContainer";
+import SettingsProvider from "./SettingsProvider";
+import ExecutableRunner from "./ExecutableRunner";
+import { CppUTestGroup } from './CppUTestGroup';
 
 export class CppUTestAdapter implements TestAdapter {
 
@@ -11,6 +17,7 @@ export class CppUTestAdapter implements TestAdapter {
 	private readonly testsEmitter = new vscode.EventEmitter<TestLoadStartedEvent | TestLoadFinishedEvent>();
 	private readonly testStatesEmitter = new vscode.EventEmitter<TestRunStartedEvent | TestRunFinishedEvent | TestSuiteEvent | TestEvent>();
 	private readonly autorunEmitter = new vscode.EventEmitter<RetireEvent>();
+	private readonly root: CppUTestContainer;
 
 	get tests(): vscode.Event<TestLoadStartedEvent | TestLoadFinishedEvent> { return this.testsEmitter.event; }
 	get testStates(): vscode.Event<TestRunStartedEvent | TestRunFinishedEvent | TestSuiteEvent | TestEvent> { return this.testStatesEmitter.event; }
@@ -27,6 +34,10 @@ export class CppUTestAdapter implements TestAdapter {
 		this.disposables.push(this.testStatesEmitter);
 		this.disposables.push(this.autorunEmitter);
 
+		const settingsProvider = new SettingsProvider(vscode.workspace.getConfiguration("cpputestExplorer"));
+		this.root = new CppUTestContainer(
+			settingsProvider.GetTestRunners().map(runner => new ExecutableRunner(exec, execFile, runner)));
+
 		const runners: string[] = getTestRunners();
 		runners.forEach(runner => fs.watchFile(<fs.PathLike>runner, (cur: fs.Stats, prev: fs.Stats) => {
 			if (cur.mtimeMs !== prev.mtimeMs) {
@@ -42,10 +53,13 @@ export class CppUTestAdapter implements TestAdapter {
 		this.testsEmitter.fire(<TestLoadStartedEvent>{ type: 'started' });
 		this.log.info('Loading tests');
 
-		const loadedTests = await loadTests();
+		const loadedTests = await Promise.all(this.root.LoadTests());
+
 		this.log.info('Tests loaded');
 
-		this.testsEmitter.fire(<TestLoadFinishedEvent>{ type: 'finished', suite: loadedTests });
+		const suite = new CppUTestGroup("Main Suite");
+		suite.children = loadedTests;
+		this.testsEmitter.fire(<TestLoadFinishedEvent>{ type: 'finished', suite });
 
 	}
 

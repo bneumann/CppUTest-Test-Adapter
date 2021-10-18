@@ -1,10 +1,11 @@
 import { expect } from 'chai';
-import { CppUTestGroup } from '../src/CppUTestImplementation';
-import { CppUTestGroupFactory } from '../src/CppUTestGroupFactory';
+import { CppUTest } from '../src/CppUTest';
+import { CppUTestGroup } from '../src/CppUTestGroup';
+import CppUTestGroupFactory from '../src/CppUTestGroupFactory';
 
 const symbolStrings = [
   {
-    name: "test1",
+    test: new CppUTest("test1"),
     value:
       "_ZN31TEST_Group1_Test1_TestShellC4Ev():\n" +
       "/tmp/myPath/basicTests.cpp:56\n" +
@@ -13,7 +14,7 @@ const symbolStrings = [
       "random information that is not correlated at all"
   },
   {
-    name: "test2",
+    test: new CppUTest("test2"),
     value:
       "_ZN31TEST_Group1_Test1_TestShellC4Ev():\n" +
       "randomly placed line that confuses the analyzer\n" +
@@ -22,7 +23,7 @@ const symbolStrings = [
       "random information that is not correlated at all"
   },
   {
-    name: "test3",
+    test: new CppUTest("test3"),
     value:
       "/tmp/myPath/basicTests.cpp:56"
   }
@@ -33,17 +34,18 @@ describe('CppUTestGroupFactory should', () => {
 
   it('create a TestSuite from an test list string', () => {
     const testListString = "Group1.Test1 Group1.Test2 Group2.Test1";
-    const testSuite = parser.CreateSuiteFromTestListString(testListString);
+    const testSuite = parser.CreateTestGroupsFromTestListString(testListString);
     expect(testSuite.label).to.be.equal("Label");
+    expect(testSuite.children.length).to.be.eq(2);
     expect(testSuite.children[0].label).to.be.equal("Group1");
     expect(testSuite.children[1].label).to.be.equal("Group2");
     expect((testSuite.children[0] as CppUTestGroup).children[0].label).to.be.equal("Test2");
   });
 
   symbolStrings.forEach(symbolString =>
-    it(`create debug information from symbol definition string for ${symbolString.name}`, () => {
-      const debugInformation = parser.CreateDebugInformationFromString(symbolString.value);
-      expect(debugInformation.file).to.be.equal("/tmp/myPath/basicTests.cpp");
-      expect(debugInformation.line).to.be.equal(54);
+    it(`create debug information from symbol definition string for ${symbolString.test.label}`, () => {
+      parser.AddDebugInformationToTest(symbolString.test, symbolString.value);
+      expect(symbolString.test.file).to.be.equal("/tmp/myPath/basicTests.cpp");
+      expect(symbolString.test.line).to.be.equal(54);
     }))
 });

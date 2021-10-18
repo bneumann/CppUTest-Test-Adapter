@@ -1,39 +1,43 @@
-import { CppUTestGroup } from './CppUTestImplementation';
-import { DebugInformation } from "./DebugInformation";
+import { TestSuiteInfo } from 'vscode-test-adapter-api';
+import { CppUTest } from './CppUTest';
+import { CppUTestGroup } from './CppUTestGroup';
 
-export class CppUTestGroupFactory {
+export default class CppUTestGroupFactory {
   private groupLabel: string;
 
   constructor(groupLabel: string) {
     this.groupLabel = groupLabel;
   }
 
-  CreateSuiteFromTestListString(testListString: string) {
+  public CreateTestGroupsFromTestListString(testListString: string) {
     const groupStrings: string[] = testListString.split(" ");
-    const groups = [...new Set(groupStrings.map(gs => gs.split(".")[0]))];
-    // This will group all tests in a sub group so they can be run at once
     const subSuite: CppUTestGroup = new CppUTestGroup(this.groupLabel);
-    groups.forEach(g => subSuite.children.push(new CppUTestGroup(g)));
+    groupStrings
+      .map(gs => gs.split("."))
+      .forEach(split => this.CreateGroupAndTests(subSuite, split[0], split[1]));
 
-    for (let i: number = 0; i < groupStrings.length; i++) {
-      const gs = groupStrings[i];
-      for (let j: number = 0; j < subSuite.TestGroups.length; j++) {
-        const tg: CppUTestGroup = subSuite.TestGroups[j];
-        // const group = gs.split(".")[0];
-        // const test = gs.split(".")[1];
-        // const value = await getLineAndFile(command, path, group, test);
-        tg.addTest(gs);
-      }
-    }
     return subSuite;
   }
 
-  CreateDebugInformationFromString(debugString: string): DebugInformation {
-    const symbolInformationLines = debugString.split("\n");
+  private CreateGroupAndTests(suite: CppUTestGroup, group: string, test: string): CppUTestGroup {
+    let testGroup = suite.children.find(c => c.label === group);
+    if (!testGroup) {
+      testGroup = new CppUTestGroup(group);
+      suite.children.push(testGroup);
+    }
+    (testGroup as TestSuiteInfo).children.unshift(new CppUTest(test));
+    return (testGroup as CppUTestGroup);
+  }
+
+  public AddDebugInformationToTest(test: CppUTest, testDebugString: string): void {
+    const symbolInformationLines = testDebugString.split("\n");
     const filePath = symbolInformationLines.filter(si => si.startsWith("/"))[0];
     const debugSymbols: string[] = filePath.split(":");
     const file = debugSymbols[0];
     const line = parseInt(debugSymbols[1], 10) - 2; // show it above the test
-    return new DebugInformation(file, line);
+    test.file = file;
+    test.line = line;
   }
 }
+
+
