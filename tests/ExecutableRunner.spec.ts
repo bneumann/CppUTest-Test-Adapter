@@ -1,4 +1,4 @@
-import { expect, use as chaiUse } from 'chai';
+import { assert, expect, use as chaiUse } from 'chai';
 import * as chaiAsPromised from "chai-as-promised";
 import ExecutableRunner from '../src/ExecutableRunner';
 
@@ -61,6 +61,11 @@ describe("ExecutableRunner should", () => {
 
       expect(testListString).to.be.eq(testOutput.value);
     })
+  })
+
+  it("execute the command in the correct path", () => {
+    //TODO: Add spy callback to catch if cwd is passed
+    assert.fail("path not passed into ExecutableRunner");
   })
 })
 
