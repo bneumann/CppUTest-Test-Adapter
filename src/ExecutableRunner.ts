@@ -1,21 +1,23 @@
 import { ExecException } from "child_process";
-import { basename } from "path";
+import { basename, dirname } from "path";
 
 export default class ExecutableRunner {
   private readonly exec: Function;
   private readonly execFile: Function;
   private readonly command: string;
+  private readonly workingDirectory: string;
   public readonly Name: string;
 
-  constructor(exec: Function, execFile: Function, command: string) {
+  constructor(exec: Function, execFile: Function, command: string, workingDirectory: string = dirname(command)) {
     this.exec = exec;
     this.execFile = execFile;
     this.command = command;
+    this.workingDirectory = workingDirectory;
     this.Name = basename(command);
   }
 
   public GetTestList(): Promise<string> {
-    return new Promise<string>((resolve, reject) => this.execFile(this.command, ["-ln"], { cwd: "" }, (error: any, stdout: any, stderr: any) => {
+    return new Promise<string>((resolve, reject) => this.execFile(this.command, ["-ln"], { cwd: this.workingDirectory }, (error: any, stdout: any, stderr: any) => {
       if (error) {
         console.error('stderr', stderr);
         reject(error);
@@ -31,7 +33,7 @@ export default class ExecutableRunner {
     // Windows:
     // const sourceGrep = `windObjDumpOrWhatEver ${command} | findstr TEST_${group}_${test}`
     return new Promise<string>((resolve, reject) => {
-      this.exec(sourceGrep, { cwd: "" }, (error: ExecException | null, stdout: string, stderr: string) => {
+      this.exec(sourceGrep, { cwd: this.workingDirectory }, (error: ExecException | null, stdout: string, stderr: string) => {
         if (error) {
           console.error('stderr', error.cmd);
           reject(stderr);
@@ -39,6 +41,17 @@ export default class ExecutableRunner {
           resolve(stdout);
         }
       });
+    });
+  }
+
+  public RunTest(group: string, test: string): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
+      this.execFile(this.command, ["-sg", group, "-sn", test, "-v"], { cwd: this.workingDirectory }, (error: ExecException | null, stdout: string, stderr: string) => {
+        if (error && error.code === null) {
+          reject(stderr);
+        }
+        resolve(stdout);
+      })
     });
   }
 }

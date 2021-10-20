@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { CppUTest } from '../src/CppUTest';
 import { CppUTestGroup } from '../src/CppUTestGroup';
-import CppUTestGroupFactory from '../src/CppUTestGroupFactory';
+import CppUTestSuite from '../src/CppUTestSuite';
 
 const symbolStrings = [
   {
@@ -29,8 +29,8 @@ const symbolStrings = [
   }
 ];
 
-describe('CppUTestGroupFactory should', () => {
-  const parser = new CppUTestGroupFactory("Label");
+describe('CppUTestSuite should', () => {
+  const parser = new CppUTestSuite("Label");
 
   it('create a TestSuite from an test list string', () => {
     const testListString = "Group1.Test1 Group1.Test2 Group2.Test1";

@@ -2,7 +2,7 @@ import { TestSuiteInfo } from 'vscode-test-adapter-api';
 import { CppUTest } from './CppUTest';
 import { CppUTestGroup } from './CppUTestGroup';
 
-export default class CppUTestGroupFactory {
+export default class CppUTestSuite {
   private groupLabel: string;
 
   constructor(groupLabel: string) {

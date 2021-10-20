@@ -1,5 +1,6 @@
 import { TestSuiteInfo, TestInfo } from 'vscode-test-adapter-api';
 import { CppUTest } from "./CppUTest";
+import uuid from './uuid';
 
 
 export class CppUTestGroup implements TestSuiteInfo {
@@ -15,7 +16,7 @@ export class CppUTestGroup implements TestSuiteInfo {
 
     constructor(inputString: string, executable: string | undefined = undefined) {
         this.type = "suite";
-        this.id = inputString;
+        this.id = uuid();
         this.label = inputString;
         this.children = new Array<CppUTest | CppUTestGroup>();
         this.executable = executable;

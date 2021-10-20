@@ -1,4 +1,4 @@
-import { assert, expect, use as chaiUse } from 'chai';
+import { expect, use as chaiUse } from 'chai';
 import * as chaiAsPromised from "chai-as-promised";
 import ExecutableRunner from '../src/ExecutableRunner';
 
@@ -26,6 +26,14 @@ const debugStrings = [
   }
 ]
 
+const createFailingTestString = (group: string, test: string): string => {
+  return `TEST(${group}, ${test})\n` +
+    `/home/user/test/myTests/.cpp(58): error: Failure in TEST(${group}, ${test})\n` +
+    "Message: This is failing\n" +
+    "CHECK(false) failed\n\n" +
+    "- 4 ms\n\n" +
+    "Errors (1 failures, 9 tests, 1 ran, 1 checks, 0 ignored, 8 filtered out, 6 ms)";
+}
 
 describe("ExecutableRunner should", () => {
 
@@ -63,9 +71,35 @@ describe("ExecutableRunner should", () => {
     })
   })
 
-  it("execute the command in the correct path", () => {
-    //TODO: Add spy callback to catch if cwd is passed
-    assert.fail("path not passed into ExecutableRunner");
+  it("execute the command in the correct path", async () => {
+    const command = "runnable";
+    let calledOptions: any = {};
+
+    let mockExec = (cmd: string, options: any, callback: Function) => {
+      calledOptions = options;
+      callback(undefined, "Group1.Test1", undefined);
+    }
+
+    let mockExecFile = (cmd: string, args: any, options: any, callback: Function) => {
+      calledOptions = options;
+      callback(undefined, "Group1.Test1", undefined);
+    }
+
+    let runner = new ExecutableRunner(mockExec, mockExecFile, command, "/tmp/myPath");
+    await runner.GetTestList();
+    expect(calledOptions.cwd).to.be.eq("/tmp/myPath");
+  })
+
+  it("return the correct string on run", async () => {
+    const resultString = createFailingTestString("myGroup", "myTest");
+    let { mockExec, mockExecFile } = setupMockCalls(undefined, resultString, "");
+    const command = "runnable";
+
+    let runner = new ExecutableRunner(mockExec, mockExecFile, command);
+
+    let actualResultString = await runner.RunTest("myGroup", "myTest");
+
+    expect(actualResultString).to.be.eq(resultString);
   })
 })
 
