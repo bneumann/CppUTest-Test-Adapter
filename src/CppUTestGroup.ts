@@ -22,20 +22,17 @@ export class CppUTestGroup implements TestSuiteInfo {
         this.executable = executable;
     }
 
-    addTest(testName: string, file?: string, line?: number) {
+    AddTest(testName: string, file?: string, line?: number) {
         const test: CppUTest = new CppUTest(testName, file, line);
         this.children.unshift(test);
     }
 
-    findTest(label: string): CppUTest | undefined {
-        if (label.indexOf(".")) {
-            return this.Tests.find(t => t.id === label);
-        }
-        return undefined;
+    FindTest(id: string): CppUTest | undefined {
+        return this.Tests.find(t => t.id === id);
     }
 
     updateTest(test: CppUTest) {
-        let oldTest: CppUTest | undefined = this.findTest(test.label);
+        let oldTest: CppUTest | undefined = this.FindTest(test.label);
         if (oldTest) {
             oldTest = test;
         }

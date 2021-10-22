@@ -153,7 +153,7 @@ async function runSingleCall(command: string, group: string, test: string, path:
     const promise: Promise<TestEvent> = new Promise<TestEvent>((resolve, reject) => {
         const runProcess: ChildProcess = execFile(command, ["-sg", group, "-sn", test, "-v"], { cwd: path }, (error: any, stdout, stderr) => {
             if (error && error.code === null) {
-                resolve(Promise.resolve(<TestEvent>{ type: 'test', test: mainSuite.findTest(group + "." + test), state: 'errored', message: stderr }));
+                resolve(Promise.resolve(<TestEvent>{ type: 'test', test: mainSuite.FindTest(group + "." + test), state: 'errored', message: stderr }));
                 return;
             }
             const regexPattern: RegExp = /(\w*)_*TEST\((\w*), (\w*)\)(.*?)- (\d*) ms/gs;

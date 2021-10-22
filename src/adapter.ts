@@ -53,7 +53,7 @@ export class CppUTestAdapter implements TestAdapter {
 		this.testsEmitter.fire(<TestLoadStartedEvent>{ type: 'started' });
 		this.log.info('Loading tests');
 
-		const loadedTests = await Promise.all(this.root.LoadTests());
+		const loadedTests = await this.root.LoadTests();
 
 		this.log.info('Tests loaded');
 
