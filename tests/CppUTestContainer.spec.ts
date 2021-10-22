@@ -29,7 +29,7 @@ describe("CppUTestContainer should", () => {
     expect((allTests[1].children[1] as CppUTestGroup).children[0].label).to.be.eq("Test42");
   })
 
-  it("get the same id on consecutive loads", async () =>{
+  it("get the same id on consecutive loads", async () => {
     const mockRunner = mock<ExecutableRunner>();
     when(mockRunner.Name).thenReturn("Exec1");
     when(mockRunner.GetTestList()).thenResolve("Group1.Test1 Group2.Test2");
@@ -67,6 +67,38 @@ describe("CppUTestContainer should", () => {
     verify(mockRunner.RunTest("Group2", "Test2")).never();
   })
 
+  it("run tests by ids", async () => {
+    const mockRunner = mock<ExecutableRunner>();
+    when(mockRunner.Name).thenReturn("Exec1");
+    when(mockRunner.GetTestList()).thenResolve("Group1.Test1 Group2.Test2");
+
+    const container = new CppUTestContainer([instance(mockRunner)]);
+
+    const allTests = await container.LoadTests();
+    const testsToRun = [
+      (allTests[0].children[0] as TestSuiteInfo).children[0],
+      (allTests[0].children[1] as TestSuiteInfo).children[0]
+    ];
+    await container.RunTest(...testsToRun.map(t => t.id));
+    verify(mockRunner.RunTest("Group1", "Test1")).called();
+    verify(mockRunner.RunTest("Group2", "Test2")).called();
+  })
+
+  it("run tests by group ids", async () => {
+    const mockRunner = mock<ExecutableRunner>();
+    when(mockRunner.Name).thenReturn("Exec1");
+    when(mockRunner.GetTestList()).thenResolve("Group1.Test1 Group2.Test2");
+
+    const container = new CppUTestContainer([instance(mockRunner)]);
+
+    const allTests = await container.LoadTests();
+    const testsToRun = allTests[0].id;
+
+    await container.RunTest(testsToRun);
+    verify(mockRunner.RunTest("Group1", "Test1")).called();
+    verify(mockRunner.RunTest("Group2", "Test2")).called();
+  })
+
   it("notify the caller on test start and finish", async () => {
     const mockRunner = mock<ExecutableRunner>();
     when(mockRunner.Name).thenReturn("Exec1");
@@ -78,11 +110,12 @@ describe("CppUTestContainer should", () => {
     const testToRun = (allTests[0].children[0] as TestSuiteInfo).children[0];
     let testOnStart = undefined;
     let testOnFinish = undefined;
-    let testResultOnFinish: TestResult = undefined;
+    let testResultOnFinish: TestResult | undefined = undefined;
     container.OnTestStart = test => testOnStart = test;
-    container.OnTestFinish = (test, result) => {testOnFinish = test; testResultOnFinish = result};
+    container.OnTestFinish = (test, result) => { testOnFinish = test; testResultOnFinish = result };
     await container.RunTest(testToRun.id);
     expect(testOnStart).to.be.deep.eq(testToRun);
     expect(testOnFinish).to.be.deep.eq(testToRun);
+    expect(testResultOnFinish).to.be.not.undefined;
   })
 });

@@ -47,16 +47,24 @@ export default class CppUTestContainer {
     return returnString;
   }
 
-  public async RunTest(id: string): Promise<void> {
+  public async RunTest(...testId: string[]): Promise<void> {
     const testList = await this.LoadTests();
     for (const executableGroup of testList) {
       for (const testGroup of executableGroup.children) {
-        const test = (testGroup as CppUTestGroup).FindTest(id);
+        let tests: (CppUTest | undefined)[];
+        if (testId.filter(tId => tId === testGroup.id).length > 0) {
+          tests = (testGroup as CppUTestGroup).Tests;
+        }
+        else {
+          tests = testId.map(id => (testGroup as CppUTestGroup).FindTest(id));
+        }
         const runner = this.runners.filter(r => r.Name === executableGroup.label)[0];
-        if (test && runner) {
-          this.onTestStartHandler((test as CppUTest));
-          await runner.RunTest(testGroup.label, test.label);
-          this.onTestFinishHandler((test as CppUTest), new TestResult(TestState.Passed, ""));
+        for (const test of tests) {
+          if (test && runner) {
+            this.onTestStartHandler((test as CppUTest));
+            await runner.RunTest(testGroup.label, test!.label);
+            this.onTestFinishHandler((test as CppUTest), new TestResult(TestState.Passed, ""));
+          }
         }
       }
     }

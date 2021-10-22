@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { TestAdapter, TestLoadStartedEvent, TestLoadFinishedEvent, TestRunStartedEvent, TestRunFinishedEvent, TestSuiteEvent, TestEvent, RetireEvent } from 'vscode-test-adapter-api';
 import { Log } from 'vscode-test-adapter-util';
-import { runTests, killTestRun, getTestRunners, debugTest } from './legacyWrapper'
+import { killTestRun, getTestRunners, debugTest } from './legacyWrapper'
 import *  as fs from 'fs';
 import { exec, execFile } from "child_process";
 
@@ -67,7 +67,8 @@ export class CppUTestAdapter implements TestAdapter {
 
 		this.testStatesEmitter.fire(<TestRunStartedEvent>{ type: 'started', tests });
 		this.log.info('Running tests');
-		await runTests(tests, this.testStatesEmitter);
+		// await runTests(tests, this.testStatesEmitter);
+		await this.root.RunTest(...tests);
 		this.log.info('Done');
 		this.testStatesEmitter.fire(<TestRunFinishedEvent>{ type: 'finished' });
 
