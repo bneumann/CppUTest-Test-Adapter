@@ -4,6 +4,7 @@ import ExecutableRunner from "../src/ExecutableRunner";
 import CppUTestContainer from "../src/CppUTestContainer";
 import { CppUTestGroup } from "../src/CppUTestGroup";
 import { TestSuiteInfo } from "vscode-test-adapter-api";
+import { TestResult } from "../src/TestResult";
 
 describe("CppUTestContainer should", () => {
   it("load all tests from all testrunners", async () => {
@@ -64,5 +65,24 @@ describe("CppUTestContainer should", () => {
     await container.RunTest(testToRun.id);
     verify(mockRunner.RunTest("Group1", "Test1")).called();
     verify(mockRunner.RunTest("Group2", "Test2")).never();
+  })
+
+  it("notify the caller on test start and finish", async () => {
+    const mockRunner = mock<ExecutableRunner>();
+    when(mockRunner.Name).thenReturn("Exec1");
+    when(mockRunner.GetTestList()).thenResolve("Group1.Test1 Group2.Test2");
+
+    const container = new CppUTestContainer([instance(mockRunner)]);
+    const allTests = await container.LoadTests();
+
+    const testToRun = (allTests[0].children[0] as TestSuiteInfo).children[0];
+    let testOnStart = undefined;
+    let testOnFinish = undefined;
+    let testResultOnFinish: TestResult = undefined;
+    container.OnTestStart = test => testOnStart = test;
+    container.OnTestFinish = (test, result) => {testOnFinish = test; testResultOnFinish = result};
+    await container.RunTest(testToRun.id);
+    expect(testOnStart).to.be.deep.eq(testToRun);
+    expect(testOnFinish).to.be.deep.eq(testToRun);
   })
 });
