@@ -5,17 +5,27 @@ import CppUTestContainer from "../src/Domain/CppUTestContainer";
 import { CppUTestGroup } from "../src/Domain/CppUTestGroup";
 import { TestSuiteInfo } from "vscode-test-adapter-api";
 import { TestResult } from "../src/Domain/TestResult";
+import { SettingsProvider } from "../src/Infrastructure/SettingsProvider";
+import { VscodeAdapter } from "../src/Infrastructure/VscodeAdapter";
 
 describe("CppUTestContainer should", () => {
-  it("load all tests from all testrunners", async () => {
-    const mockRunner1 = mock<ExecutableRunner>();
-    when(mockRunner1.GetTestList()).thenResolve("Group1.Test1 Group2.Test2");
-    when(mockRunner1.Name).thenReturn("Exec1");
-    const mockRunner2 = mock<ExecutableRunner>();
-    when(mockRunner2.GetTestList()).thenResolve("Group4.Test1 Group5.Test2 Group5.Test42");
-    when(mockRunner2.Name).thenReturn("Exec2");
+  let mockRunner: ExecutableRunner;
+  let mockSetting: SettingsProvider;
+  let mockAdapter: VscodeAdapter;
 
-    const container = new CppUTestContainer([instance(mockRunner1), instance(mockRunner2)]);
+  beforeEach(() => {
+    mockRunner = createMockRunner("Exec1", "Group1.Test1 Group2.Test2");
+    mockSetting = mock<SettingsProvider>();
+    mockAdapter = mock<VscodeAdapter>();
+    when(mockSetting.GetTestPath()).thenReturn("/test/myPath");
+    when(mockSetting.GetTestRunners()).thenReturn(["/test/myPath/Exec1"]);
+  })
+
+  it("load all tests from all testrunners", async () => {
+    const mockRunner1 = createMockRunner("Exec1", "Group1.Test1 Group2.Test2");
+    const mockRunner2 = createMockRunner("Exec2", "Group4.Test1 Group5.Test2 Group5.Test42");
+
+    const container = new CppUTestContainer([instance(mockRunner1), instance(mockRunner2)], instance(mockSetting), instance(mockAdapter));
 
     const allTests = await container.LoadTests();
     expect(allTests).to.be.lengthOf(2);
@@ -30,22 +40,17 @@ describe("CppUTestContainer should", () => {
   })
 
   it("get the same id on consecutive loads", async () => {
-    const mockRunner = mock<ExecutableRunner>();
-    when(mockRunner.Name).thenReturn("Exec1");
-    when(mockRunner.GetTestList()).thenResolve("Group1.Test1 Group2.Test2");
 
-    const container = new CppUTestContainer([instance(mockRunner)]);
+    const container = new CppUTestContainer([instance(mockRunner)], instance(mockSetting), instance(mockAdapter));
     const testList1 = await container.LoadTests();
     const testList2 = await container.LoadTests();
     expect(JSON.stringify(testList1)).to.be.eq(JSON.stringify(testList2));
   })
 
   it("run all tests", async () => {
-    const mockRunner = mock<ExecutableRunner>();
-    when(mockRunner.Name).thenReturn("Exec1");
-    when(mockRunner.GetTestList()).thenResolve("Group1.Test1 Group2.Test2");
+    const mockRunner = createMockRunner("Exec1", "Group1.Test1 Group2.Test2");
 
-    const container = new CppUTestContainer([instance(mockRunner)]);
+    const container = new CppUTestContainer([instance(mockRunner)], instance(mockSetting), instance(mockAdapter));
 
     await container.LoadTests();
     await container.RunAllTests();
@@ -54,11 +59,9 @@ describe("CppUTestContainer should", () => {
   })
 
   it("run test by id", async () => {
-    const mockRunner = mock<ExecutableRunner>();
-    when(mockRunner.Name).thenReturn("Exec1");
-    when(mockRunner.GetTestList()).thenResolve("Group1.Test1 Group2.Test2");
+    const mockRunner = createMockRunner("Exec1", "Group1.Test1 Group2.Test2");
 
-    const container = new CppUTestContainer([instance(mockRunner)]);
+    const container = new CppUTestContainer([instance(mockRunner)], instance(mockSetting), instance(mockAdapter));
 
     const allTests = await container.LoadTests();
     const testToRun = (allTests[0].children[0] as TestSuiteInfo).children[0];
@@ -68,11 +71,7 @@ describe("CppUTestContainer should", () => {
   })
 
   it("run tests by ids", async () => {
-    const mockRunner = mock<ExecutableRunner>();
-    when(mockRunner.Name).thenReturn("Exec1");
-    when(mockRunner.GetTestList()).thenResolve("Group1.Test1 Group2.Test2");
-
-    const container = new CppUTestContainer([instance(mockRunner)]);
+    const container = new CppUTestContainer([instance(mockRunner)], instance(mockSetting), instance(mockAdapter));
 
     const allTests = await container.LoadTests();
     const testsToRun = [
@@ -89,7 +88,7 @@ describe("CppUTestContainer should", () => {
     when(mockRunner.Name).thenReturn("Exec1");
     when(mockRunner.GetTestList()).thenResolve("Group1.Test1 Group2.Test2");
 
-    const container = new CppUTestContainer([instance(mockRunner)]);
+    const container = new CppUTestContainer([instance(mockRunner)], instance(mockSetting), instance(mockAdapter));
 
     const allTests = await container.LoadTests();
     expect(allTests).to.have.lengthOf(1);
@@ -100,12 +99,19 @@ describe("CppUTestContainer should", () => {
     verify(mockRunner.RunTest("Group2", "Test2")).called();
   })
 
-  it("notify the caller on test start and finish", async () => {
-    const mockRunner = mock<ExecutableRunner>();
-    when(mockRunner.Name).thenReturn("Exec1");
-    when(mockRunner.GetTestList()).thenResolve("Group1.Test1 Group2.Test2");
+  it("start the debugger for the given test", async () => {
+    const container = new CppUTestContainer([instance(mockRunner)], instance(mockSetting), instance(mockAdapter));
 
-    const container = new CppUTestContainer([instance(mockRunner)]);
+    const allTests = await container.LoadTests();
+    expect(allTests).to.have.lengthOf(1);
+    const testsToRunId = allTests[0].id;
+
+    await container.DebugTest(testsToRunId);
+
+  })
+
+  it("notify the caller on test start and finish", async () => {
+    const container = new CppUTestContainer([instance(mockRunner)], instance(mockSetting), instance(mockAdapter));
     const allTests = await container.LoadTests();
 
     const testToRun = (allTests[0].children[0] as TestSuiteInfo).children[0];
@@ -120,3 +126,10 @@ describe("CppUTestContainer should", () => {
     expect(testResultOnFinish).to.be.not.undefined;
   })
 });
+
+function createMockRunner(runnerName: string, testListString: string) {
+  const mockRunner = mock<ExecutableRunner>();
+  when(mockRunner.Name).thenReturn(runnerName);
+  when(mockRunner.GetTestList()).thenResolve(testListString);
+  return mockRunner;
+}

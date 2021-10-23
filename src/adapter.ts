@@ -5,7 +5,7 @@ import { killTestRun, getTestRunners, debugTest } from './legacyWrapper'
 import *  as fs from 'fs';
 
 import CppUTestContainer from "./Domain/CppUTestContainer";
-import SettingsProvider from "./Infrastructure/SettingsProvider";
+import VscodeSettingsProvider from "./Infrastructure/VscodeSettingsProvider";
 import ExecutableRunner from "./Infrastructure/ExecutableRunner";
 import { CppUTestGroup } from './Domain/CppUTestGroup';
 import { NodeProcessExecuter } from './Application/NodeProcessExecuter';
@@ -37,10 +37,9 @@ export class CppUTestAdapter implements TestAdapter {
 		this.disposables.push(this.testStatesEmitter);
 		this.disposables.push(this.autorunEmitter);
 
-		const settingsProvider = new SettingsProvider(vscode.workspace.getConfiguration("cpputestExplorer"));
+		const settingsProvider = new VscodeSettingsProvider(vscode.workspace.getConfiguration("cpputestExplorer"));
 		const processExecuter = new NodeProcessExecuter();
-		this.root = new CppUTestContainer(
-			settingsProvider.GetTestRunners().map(runner => new ExecutableRunner(processExecuter, runner)));
+		this.root = new CppUTestContainer(settingsProvider, processExecuter);
 
 		this.root.OnTestStart = test => {
 			const event: TestEvent = {

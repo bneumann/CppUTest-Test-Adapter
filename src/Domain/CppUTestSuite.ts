@@ -25,7 +25,7 @@ export default class CppUTestSuite {
       testGroup = new CppUTestGroup(group);
       suite.children.push(testGroup);
     }
-    (testGroup as TestSuiteInfo).children.unshift(new CppUTest(test));
+    (testGroup as TestSuiteInfo).children.unshift(new CppUTest(test, group));
     return (testGroup as CppUTestGroup);
   }
 

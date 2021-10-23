@@ -4,11 +4,15 @@ import { TestResult } from "./TestResult";
 import ExecutableRunner from "../Infrastructure/ExecutableRunner";
 import { CppUTest } from "./CppUTest";
 import { TestState } from "./TestState";
+import { SettingsProvider } from "../Infrastructure/SettingsProvider";
+import { VscodeAdapter } from "../Infrastructure/VscodeAdapter";
 
 export default class CppUTestContainer {
 
   private runners: ExecutableRunner[];
   private suites: Map<string, CppUTestGroup>;
+  private settingsProvider: SettingsProvider;
+  private vscodeAdapter: VscodeAdapter;
   private onTestFinishHandler: (test: CppUTest, result: TestResult) => void = () => { };
   private onTestStartHandler: (test: CppUTest) => void = () => { };
   // private dirty: boolean;
@@ -19,8 +23,10 @@ export default class CppUTestContainer {
     this.onTestStartHandler = handler;
   }
 
-  constructor(runners: ExecutableRunner[]) {
+  constructor(runners: ExecutableRunner[], settingsProvider: SettingsProvider, vscodeAdapter: VscodeAdapter) {
+    this.settingsProvider = settingsProvider;
     this.runners = runners;
+    this.vscodeAdapter = vscodeAdapter;
     this.suites = new Map<string, CppUTestGroup>();
   }
 
@@ -60,6 +66,28 @@ export default class CppUTestContainer {
             await runner.RunTest(testGroup.label, test!.label);
             this.onTestFinishHandler((test as CppUTest), new TestResult(TestState.Passed, ""));
           }
+        }
+      }
+    }
+  }
+
+  public async DebugTest(...testId: string[]): Promise<void> {
+    const config = this.settingsProvider.GetDebugConfiguration();
+    const workspaceFolders = this.settingsProvider.GetWorkspaceFolders();
+    if (config === "") {
+      throw new Error("No debug configuration found. Not able to debug!");
+    }
+    const testList = await this.LoadTests();
+    for (const executableGroup of testList) {
+      const tests: CppUTest[] = this.GetAllChildTestsById(testId, executableGroup);
+      const runner = this.runners.filter(r => r.Name === executableGroup.label)[0];
+      for (const test of tests) {
+        if (test && runner) {
+          this.onTestStartHandler((test as CppUTest));
+          if (workspaceFolders) {
+            await this.vscodeAdapter.StartDebugger(workspaceFolders, config);
+          }
+          this.onTestFinishHandler((test as CppUTest), new TestResult(TestState.Passed, ""));
         }
       }
     }

@@ -5,7 +5,7 @@ import CppUTestSuite from '../src/Domain/CppUTestSuite';
 
 const symbolStrings = [
   {
-    test: new CppUTest("test1"),
+    test: new CppUTest("test1", "group1"),
     value:
       "_ZN31TEST_Group1_Test1_TestShellC4Ev():\n" +
       "/tmp/myPath/basicTests.cpp:56\n" +
@@ -14,7 +14,7 @@ const symbolStrings = [
       "random information that is not correlated at all"
   },
   {
-    test: new CppUTest("test2"),
+    test: new CppUTest("test2", "group1"),
     value:
       "_ZN31TEST_Group1_Test1_TestShellC4Ev():\n" +
       "randomly placed line that confuses the analyzer\n" +
@@ -23,7 +23,7 @@ const symbolStrings = [
       "random information that is not correlated at all"
   },
   {
-    test: new CppUTest("test3"),
+    test: new CppUTest("test3", "group1"),
     value:
       "/tmp/myPath/basicTests.cpp:56"
   }

@@ -19,7 +19,7 @@ describe("CppUTestGroup should", () => {
   })
 
   it("find test by id", () => {
-    const test = new CppUTest("myTest");
+    const test = new CppUTest("myTest", "myGroup");
     const id = test.id;
     testGroup.children.push(test);
     testGroup.AddTest("randomTest1");

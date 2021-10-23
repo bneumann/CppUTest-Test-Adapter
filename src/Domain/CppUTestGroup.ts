@@ -23,7 +23,7 @@ export class CppUTestGroup implements TestSuiteInfo {
     }
 
     AddTest(testName: string, file?: string, line?: number) {
-        const test: CppUTest = new CppUTest(testName, file, line);
+        const test: CppUTest = new CppUTest(testName, this.label, file, line);
         this.children.unshift(test);
     }
 
