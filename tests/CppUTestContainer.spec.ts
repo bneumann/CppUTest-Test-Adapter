@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { mock, instance, when, verify } from "ts-mockito";
+import { mock, instance, when, verify, anything } from "ts-mockito";
 import ExecutableRunner from "../src/Infrastructure/ExecutableRunner";
 import CppUTestContainer from "../src/Domain/CppUTestContainer";
 import { CppUTestGroup } from "../src/Domain/CppUTestGroup";
@@ -7,6 +7,7 @@ import { TestSuiteInfo } from "vscode-test-adapter-api";
 import { TestResult } from "../src/Domain/TestResult";
 import { SettingsProvider } from "../src/Infrastructure/SettingsProvider";
 import { VscodeAdapter } from "../src/Infrastructure/VscodeAdapter";
+import { DebugConfiguration, WorkspaceFolder } from "vscode";
 
 describe("CppUTestContainer should", () => {
   let mockRunner: ExecutableRunner;
@@ -100,6 +101,14 @@ describe("CppUTestContainer should", () => {
   })
 
   it("start the debugger for the given test", async () => {
+    const mockFolder = mock<WorkspaceFolder>();
+    const debugConfigSpy = <DebugConfiguration>{
+      name: "",
+      request: "",
+      type: ""
+    };
+    when(mockSetting.GetWorkspaceFolders()).thenReturn([instance(mockFolder)]);
+    when(mockSetting.GetDebugConfiguration()).thenReturn(debugConfigSpy);
     const container = new CppUTestContainer([instance(mockRunner)], instance(mockSetting), instance(mockAdapter));
 
     const allTests = await container.LoadTests();
@@ -107,7 +116,31 @@ describe("CppUTestContainer should", () => {
     const testsToRunId = allTests[0].id;
 
     await container.DebugTest(testsToRunId);
+    verify(mockAdapter.StartDebugger(anything(), anything())).called();
+    expect((debugConfigSpy as any).name).to.be.eq("Group2.Test2");
+    expect((debugConfigSpy as any).args).to.be.deep.eq(["-t", "Group2.Test2"]);
+  })
 
+  it("thrown an error if the debugger is started without config", async () => {
+    mockSetting = mock<SettingsProvider>();
+    when(mockSetting.GetDebugConfiguration()).thenReturn("");
+    const container = new CppUTestContainer([instance(mockRunner)], instance(mockSetting), instance(mockAdapter));
+
+    const allTests = await container.LoadTests();
+    const testsToRunId = allTests[0].id;
+
+    return expect(container.DebugTest(testsToRunId)).to.be.
+      eventually.rejectedWith("No debug configuration found. Not able to debug");
+  })
+
+  it("thrown an error if the debugger is started without workspaceFolders", async () => {
+    const container = new CppUTestContainer([instance(mockRunner)], instance(mockSetting), instance(mockAdapter));
+
+    const allTests = await container.LoadTests();
+    const testsToRunId = allTests[0].id;
+
+    return expect(container.DebugTest(testsToRunId)).to.be.
+      eventually.rejectedWith("No workspaceFolders found. Not able to debug!");
   })
 
   it("notify the caller on test start and finish", async () => {

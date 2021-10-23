@@ -6,6 +6,7 @@ import { CppUTest } from "./CppUTest";
 import { TestState } from "./TestState";
 import { SettingsProvider } from "../Infrastructure/SettingsProvider";
 import { VscodeAdapter } from "../Infrastructure/VscodeAdapter";
+import { DebugConfiguration } from "vscode";
 
 export default class CppUTestContainer {
 
@@ -77,6 +78,9 @@ export default class CppUTestContainer {
     if (config === "") {
       throw new Error("No debug configuration found. Not able to debug!");
     }
+    if (!workspaceFolders) {
+      throw new Error("No workspaceFolders found. Not able to debug!");
+    }
     const testList = await this.LoadTests();
     for (const executableGroup of testList) {
       const tests: CppUTest[] = this.GetAllChildTestsById(testId, executableGroup);
@@ -84,9 +88,10 @@ export default class CppUTestContainer {
       for (const test of tests) {
         if (test && runner) {
           this.onTestStartHandler((test as CppUTest));
-          if (workspaceFolders) {
-            await this.vscodeAdapter.StartDebugger(workspaceFolders, config);
-          }
+          const testRunName = `${test.group}.${test.label}`;
+          (config as DebugConfiguration).name = testRunName;
+          (config as DebugConfiguration).args = ["-t", testRunName];
+          await this.vscodeAdapter.StartDebugger(workspaceFolders, config);
           this.onTestFinishHandler((test as CppUTest), new TestResult(TestState.Passed, ""));
         }
       }

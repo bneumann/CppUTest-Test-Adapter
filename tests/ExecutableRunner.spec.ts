@@ -51,12 +51,14 @@ describe("ExecutableRunner should", () => {
     })
   })
 
-  it("throw an exception if an error occured", async () => {
+  it("throw an exception if an error occured", () => {
     const processExecuter = setupMockCalls(new Error("whoops"), "", "Something happened");
     const command = "runnable";
 
     let runner = new ExecutableRunner(processExecuter, command);
-    expect(runner.GetTestList()).to.be.eventually.be.rejectedWith(Error);
+    return expect(runner.GetTestList()).to.be.eventually.
+      be.rejectedWith("whoops")
+      .and.be.an.instanceOf(Error)
   })
 
   debugStrings.forEach(testOutput => {
