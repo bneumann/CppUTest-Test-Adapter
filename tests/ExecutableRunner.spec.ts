@@ -1,6 +1,8 @@
 import { expect, use as chaiUse } from 'chai';
 import * as chaiAsPromised from "chai-as-promised";
-import ExecutableRunner from '../src/ExecutableRunner';
+import ExecutableRunner from '../src/Infrastructure/ExecutableRunner';
+import { ProcessExecuter } from '../src/Application/ProcessExecuter';
+import { anything, instance, mock, verify, when } from "ts-mockito";
 
 chaiUse(chaiAsPromised);
 
@@ -36,13 +38,12 @@ const createFailingTestString = (group: string, test: string): string => {
 }
 
 describe("ExecutableRunner should", () => {
-
   outputStrings.forEach(testOutput => {
     it(`get the test list string for ${testOutput.name}`, async () => {
-      let { mockExec, mockExecFile } = setupMockCalls(undefined, testOutput.value, "");
+      const processExecuter = setupMockCalls(undefined, testOutput.value, "");
       const command = "runnable";
 
-      let runner = new ExecutableRunner(mockExec, mockExecFile, command);
+      let runner = new ExecutableRunner(processExecuter, command);
 
       let testListString = await runner.GetTestList();
 
@@ -51,19 +52,19 @@ describe("ExecutableRunner should", () => {
   })
 
   it("throw an exception if an error occured", async () => {
-    let { mockExec, mockExecFile } = setupMockCalls(new Error("whoops"), "", "Something happened");
+    const processExecuter = setupMockCalls(new Error("whoops"), "", "Something happened");
     const command = "runnable";
 
-    let runner = new ExecutableRunner(mockExec, mockExecFile, command);
+    let runner = new ExecutableRunner(processExecuter, command);
     expect(runner.GetTestList()).to.be.eventually.be.rejectedWith(Error);
   })
 
   debugStrings.forEach(testOutput => {
     it(`get the debug string for ${testOutput.name}`, async () => {
-      let { mockExec, mockExecFile } = setupMockCalls(undefined, testOutput.value, "");
+      const processExecuter = setupMockCalls(undefined, testOutput.value, "");
       const command = "runnable";
 
-      let runner = new ExecutableRunner(mockExec, mockExecFile, command);
+      let runner = new ExecutableRunner(processExecuter, command);
 
       let testListString = await runner.GetDebugSymbols("someGroup", "someTest");
 
@@ -74,37 +75,49 @@ describe("ExecutableRunner should", () => {
   it("execute the command in the correct path", async () => {
     const command = "runnable";
     let calledOptions: any = {};
+    const processExecuter = mock<ProcessExecuter>();
 
-    let mockExec = (cmd: string, options: any, callback: Function) => {
+    when(processExecuter.Exec(anything(), anything(), anything())).thenCall((cmd: string, options: any, callback: Function) => {
       calledOptions = options;
       callback(undefined, "Group1.Test1", undefined);
-    }
+    });
 
-    let mockExecFile = (cmd: string, args: any, options: any, callback: Function) => {
+    when(processExecuter.ExecFile(anything(), anything(), anything(), anything())).thenCall((cmd: string, args: any, options: any, callback: Function) => {
       calledOptions = options;
       callback(undefined, "Group1.Test1", undefined);
-    }
+    });
 
-    let runner = new ExecutableRunner(mockExec, mockExecFile, command, "/tmp/myPath");
+    let runner = new ExecutableRunner(instance(processExecuter), command, "/tmp/myPath");
     await runner.GetTestList();
     expect(calledOptions.cwd).to.be.eq("/tmp/myPath");
   })
 
   it("return the correct string on run", async () => {
     const resultString = createFailingTestString("myGroup", "myTest");
-    let { mockExec, mockExecFile } = setupMockCalls(undefined, resultString, "");
+    const processExecuter = setupMockCalls(undefined, resultString, "");
     const command = "runnable";
 
-    let runner = new ExecutableRunner(mockExec, mockExecFile, command);
+    let runner = new ExecutableRunner(processExecuter, command);
 
     let actualResultString = await runner.RunTest("myGroup", "myTest");
 
     expect(actualResultString).to.be.eq(resultString);
   })
+
+  it("kill the process currently running", () => {
+    const mockedExecuter = mock<ProcessExecuter>();
+    when(mockedExecuter.KillProcess()).thenCall(() => { });
+    const executer = instance(mockedExecuter);
+    let runner = new ExecutableRunner(executer, "exec");
+    runner.KillProcess();
+    verify(mockedExecuter.KillProcess()).called();
+  })
 })
 
 function setupMockCalls(error: Error | undefined, returnValue: string, errorValue: string) {
-  let mockExec = (cmd: string, options: any, callback: Function) => callback(error, returnValue, errorValue);
-  let mockExecFile = (cmd: string, args: any, options: any, callback: Function) => callback(error, returnValue, errorValue);
-  return { mockExec, mockExecFile };
+  const mockedExecuter = mock<ProcessExecuter>();
+  when(mockedExecuter.Exec(anything(), anything(), anything())).thenCall((cmd: string, options: any, callback: Function) => callback(error, returnValue, errorValue));
+  when(mockedExecuter.ExecFile(anything(), anything(), anything(), anything())).thenCall((cmd: string, args: any, options: any, callback: Function) => callback(error, returnValue, errorValue));
+  when(mockedExecuter.KillProcess()).thenCall(() => { });
+  return instance(mockedExecuter);
 }

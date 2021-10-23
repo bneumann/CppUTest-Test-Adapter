@@ -2,9 +2,9 @@
 
 import { expect } from "chai";
 import { readFileSync } from "fs";
-import { RegexResultParser } from "../src/RegexResultParser";
-import { TestResult } from "../src/TestResult";
-import { TestState } from "../src/TestState";
+import { RegexResultParser } from "../src/Domain/RegexResultParser";
+import { TestResult } from "../src/Domain/TestResult";
+import { TestState } from "../src/Domain/TestState";
 
 const allTests: { name: string, value: string[], expected: string[] }[] = JSON.parse(readFileSync("tests/testResults.json").toString());
 

@@ -27,15 +27,11 @@ export class CppUTestGroup implements TestSuiteInfo {
         this.children.unshift(test);
     }
 
-    FindTest(id: string): CppUTest | undefined {
-        return this.Tests.find(t => t.id === id);
-    }
-
-    updateTest(test: CppUTest) {
-        let oldTest: CppUTest | undefined = this.FindTest(test.label);
-        if (oldTest) {
-            oldTest = test;
+    FindTest(id: string): CppUTest[] {
+        if(this.id === id) {
+            return this.Tests;
         }
+        return this.Tests.filter(t => t.id === id);
     }
 
     get Tests(): CppUTest[] {

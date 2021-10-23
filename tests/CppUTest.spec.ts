@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { CppUTest } from "../src/CppUTest";
+import { CppUTest } from "../src/Domain/CppUTest";
 
 describe("CppUTest should", () => {
   it("be creatable with all information", () => {

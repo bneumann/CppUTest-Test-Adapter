@@ -1,10 +1,10 @@
 import { expect } from "chai";
 import { mock, instance, when, verify } from "ts-mockito";
-import ExecutableRunner from "../src/ExecutableRunner";
-import CppUTestContainer from "../src/CppUTestContainer";
-import { CppUTestGroup } from "../src/CppUTestGroup";
+import ExecutableRunner from "../src/Infrastructure/ExecutableRunner";
+import CppUTestContainer from "../src/Domain/CppUTestContainer";
+import { CppUTestGroup } from "../src/Domain/CppUTestGroup";
 import { TestSuiteInfo } from "vscode-test-adapter-api";
-import { TestResult } from "../src/TestResult";
+import { TestResult } from "../src/Domain/TestResult";
 
 describe("CppUTestContainer should", () => {
   it("load all tests from all testrunners", async () => {
@@ -92,9 +92,10 @@ describe("CppUTestContainer should", () => {
     const container = new CppUTestContainer([instance(mockRunner)]);
 
     const allTests = await container.LoadTests();
-    const testsToRun = allTests[0].id;
+    expect(allTests).to.have.lengthOf(1);
+    const testsToRunId = allTests[0].id;
 
-    await container.RunTest(testsToRun);
+    await container.RunTest(testsToRunId);
     verify(mockRunner.RunTest("Group1", "Test1")).called();
     verify(mockRunner.RunTest("Group2", "Test2")).called();
   })

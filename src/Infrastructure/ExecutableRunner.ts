@@ -1,16 +1,19 @@
 import { ExecException } from "child_process";
 import { basename, dirname } from "path";
+import { ProcessExecuter } from "../Application/ProcessExecuter";
 
 export default class ExecutableRunner {
   private readonly exec: Function;
   private readonly execFile: Function;
+  private readonly kill: Function;
   private readonly command: string;
   private readonly workingDirectory: string;
   public readonly Name: string;
 
-  constructor(exec: Function, execFile: Function, command: string, workingDirectory: string = dirname(command)) {
-    this.exec = exec;
-    this.execFile = execFile;
+  constructor(processExecuter: ProcessExecuter, command: string, workingDirectory: string = dirname(command)) {
+    this.exec = processExecuter.Exec;
+    this.execFile = processExecuter.ExecFile;
+    this.kill = processExecuter.KillProcess;
     this.command = command;
     this.workingDirectory = workingDirectory;
     this.Name = basename(command);
@@ -53,5 +56,9 @@ export default class ExecutableRunner {
         resolve(stdout);
       })
     });
+  }
+
+  public KillProcess() {
+    this.kill();
   }
 }

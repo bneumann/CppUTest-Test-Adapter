@@ -1,7 +1,7 @@
 import { expect } from 'chai';
-import { CppUTest } from '../src/CppUTest';
-import { CppUTestGroup } from '../src/CppUTestGroup';
-import CppUTestSuite from '../src/CppUTestSuite';
+import { CppUTest } from '../src/Domain/CppUTest';
+import { CppUTestGroup } from '../src/Domain/CppUTestGroup';
+import CppUTestSuite from '../src/Domain/CppUTestSuite';
 
 const symbolStrings = [
   {

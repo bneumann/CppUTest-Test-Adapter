@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
-import { execFile, ChildProcess } from 'child_process';
-import { TestSuiteInfo, TestInfo, TestRunStartedEvent, TestRunFinishedEvent, TestSuiteEvent, TestEvent } from 'vscode-test-adapter-api';
-import { CppUTest } from "./CppUTest";
+import { ChildProcess } from 'child_process';
+import { TestSuiteInfo, TestInfo} from 'vscode-test-adapter-api';
 import { CppUTestGroup } from "./CppUTestGroup";
 import { glob } from 'glob';
 
@@ -73,17 +72,17 @@ const mainSuite: CppUTestGroup = new CppUTestGroup("Main Suite");
 //     })
 // }
 
-export async function runTests(
-    tests: string[],
-    testStatesEmitter: vscode.EventEmitter<TestRunStartedEvent | TestRunFinishedEvent | TestSuiteEvent | TestEvent>
-): Promise<void> {
-    for (const suiteOrTestId of tests) {
-        const node = findNode(mainSuite, suiteOrTestId);
-        if (node) {
-            await runNode(node, testStatesEmitter);
-        }
-    }
-}
+// export async function runTests(
+//     tests: string[],
+//     testStatesEmitter: vscode.EventEmitter<TestRunStartedEvent | TestRunFinishedEvent | TestSuiteEvent | TestEvent>
+// ): Promise<void> {
+//     for (const suiteOrTestId of tests) {
+//         const node = findNode(mainSuite, suiteOrTestId);
+//         if (node) {
+//             await runNode(node, testStatesEmitter);
+//         }
+//     }
+// }
 
 export function killTestRun() {
     processes.forEach(p => p.kill("SIGTERM"));
@@ -119,72 +118,72 @@ function findNode(searchNode: TestSuiteInfo | TestInfo, id: string): TestSuiteIn
     return undefined;
 }
 
-async function runNode(
-    node: TestSuiteInfo | TestInfo,
-    testStatesEmitter: vscode.EventEmitter<TestRunStartedEvent | TestRunFinishedEvent | TestSuiteEvent | TestEvent>
-): Promise<void> {
+// async function runNode(
+//     node: TestSuiteInfo | TestInfo,
+//     testStatesEmitter: vscode.EventEmitter<TestRunStartedEvent | TestRunFinishedEvent | TestSuiteEvent | TestEvent>
+// ): Promise<void> {
 
-    if (node.type === 'suite') {
+//     if (node.type === 'suite') {
 
-        testStatesEmitter.fire(<TestSuiteEvent>{ type: 'suite', suite: node, state: 'running' });
+//         testStatesEmitter.fire(<TestSuiteEvent>{ type: 'suite', suite: node, state: 'running' });
 
-        for (const child of node.children) {
-            await runNode(child, testStatesEmitter);
-        }
+//         for (const child of node.children) {
+//             await runNode(child, testStatesEmitter);
+//         }
 
-        testStatesEmitter.fire(<TestSuiteEvent>{ type: 'suite', suite: node, state: 'completed' });
+//         testStatesEmitter.fire(<TestSuiteEvent>{ type: 'suite', suite: node, state: 'completed' });
 
-    } else { // node.type === 'test'
+//     } else { // node.type === 'test'
 
-        testStatesEmitter.fire(<TestEvent>{ type: 'test', test: node, state: 'running' });
+//         testStatesEmitter.fire(<TestEvent>{ type: 'test', test: node, state: 'running' });
 
-        const runner: string = getTestRunners()[0];
-        const path: string = getTestPath();
-        let group: string, test: string;
-        [group, test] = node.id.split(".");
-        const command: string = runner ? runner : "";
+//         const runner: string = getTestRunners()[0];
+//         const path: string = getTestPath();
+//         let group: string, test: string;
+//         [group, test] = node.id.split(".");
+//         const command: string = runner ? runner : "";
 
-        const event: TestEvent = await runSingleCall(command, group, test, path);
-        testStatesEmitter.fire(event);
-    }
-}
+//         const event: TestEvent = await runSingleCall(command, group, test, path);
+//         testStatesEmitter.fire(event);
+//     }
+// }
 
-async function runSingleCall(command: string, group: string, test: string, path: string) {
-    const promise: Promise<TestEvent> = new Promise<TestEvent>((resolve, reject) => {
-        const runProcess: ChildProcess = execFile(command, ["-sg", group, "-sn", test, "-v"], { cwd: path }, (error: any, stdout, stderr) => {
-            if (error && error.code === null) {
-                resolve(Promise.resolve(<TestEvent>{ type: 'test', test: mainSuite.FindTest(group + "." + test), state: 'errored', message: stderr }));
-                return;
-            }
-            const regexPattern: RegExp = /(\w*)_*TEST\((\w*), (\w*)\)(.*?)- (\d*) ms/gs;
-            const result: RegExpExecArray | null = regexPattern.exec(stdout)
-            if (result == null) {
-                reject({ "reason": "unkown" });
-            }
-            else {
-                let state: TestEvent["state"] = "passed";
-                if (result[1] == "IGNORE_") {
-                    state = "skipped";
-                }
-                if (result[4].trim()) {
-                    state = "failed";
-                }
-                console.log(result);
-                const event: TestEvent = {
-                    type: 'test',
-                    test: new CppUTest(test, group),
-                    state: state,
-                    message: result[4].trim(),
-                    decorations: undefined
-                }
-                console.log(event);
-                resolve(event);
-            }
-        });
-        processes.push(runProcess);
-    });
-    return Promise.resolve(promise);
-}
+// async function runSingleCall(command: string, group: string, test: string, path: string) {
+//     const promise: Promise<TestEvent> = new Promise<TestEvent>((resolve, reject) => {
+//         const runProcess: ChildProcess = execFile(command, ["-sg", group, "-sn", test, "-v"], { cwd: path }, (error: any, stdout, stderr) => {
+//             if (error && error.code === null) {
+//                 resolve(Promise.resolve(<TestEvent>{ type: 'test', test: mainSuite.FindTest(group + "." + test), state: 'errored', message: stderr }));
+//                 return;
+//             }
+//             const regexPattern: RegExp = /(\w*)_*TEST\((\w*), (\w*)\)(.*?)- (\d*) ms/gs;
+//             const result: RegExpExecArray | null = regexPattern.exec(stdout)
+//             if (result == null) {
+//                 reject({ "reason": "unkown" });
+//             }
+//             else {
+//                 let state: TestEvent["state"] = "passed";
+//                 if (result[1] == "IGNORE_") {
+//                     state = "skipped";
+//                 }
+//                 if (result[4].trim()) {
+//                     state = "failed";
+//                 }
+//                 console.log(result);
+//                 const event: TestEvent = {
+//                     type: 'test',
+//                     test: new CppUTest(test, group),
+//                     state: state,
+//                     message: result[4].trim(),
+//                     decorations: undefined
+//                 }
+//                 console.log(event);
+//                 resolve(event);
+//             }
+//         });
+//         processes.push(runProcess);
+//     });
+//     return Promise.resolve(promise);
+// }
 
 
 export function getTestRunners(): string[] {
