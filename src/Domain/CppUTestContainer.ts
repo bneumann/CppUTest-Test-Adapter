@@ -55,8 +55,9 @@ export default class CppUTestContainer {
     return returnString;
   }
 
-  public async RunTest(...testId: string[]): Promise<void> {
+  public async RunTest(...testId: string[]): Promise<TestResult[]> {
     const testList = await this.LoadTests();
+    const testResults: TestResult[] = new Array<TestResult>();
     for (const executableGroup of testList) {
       for (const testGroup of executableGroup.children) {
         const tests: CppUTest[] = this.GetAllChildTestsById(testId, executableGroup);
@@ -65,11 +66,17 @@ export default class CppUTestContainer {
           if (test && runner) {
             this.onTestStartHandler((test as CppUTest));
             await runner.RunTest(testGroup.label, test!.label);
-            this.onTestFinishHandler((test as CppUTest), new TestResult(TestState.Passed, ""));
+            const testResult = new TestResult(TestState.Passed, "");
+            this.onTestFinishHandler((test as CppUTest), testResult);
+            testResults.push(testResult);
           }
         }
       }
     }
+    if(testResults.length > 0){
+      return testResults;
+    }
+    return [new TestResult(TestState.Failed, "Unable to run or find test")];
   }
 
   public async DebugTest(...testId: string[]): Promise<void> {

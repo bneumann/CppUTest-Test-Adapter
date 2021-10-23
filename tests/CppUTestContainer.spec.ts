@@ -8,6 +8,7 @@ import { TestResult } from "../src/Domain/TestResult";
 import { SettingsProvider } from "../src/Infrastructure/SettingsProvider";
 import { VscodeAdapter } from "../src/Infrastructure/VscodeAdapter";
 import { DebugConfiguration, WorkspaceFolder } from "vscode";
+import { TestState } from "../src/Domain/TestState";
 
 describe("CppUTestContainer should", () => {
   let mockRunner: ExecutableRunner;
@@ -98,6 +99,21 @@ describe("CppUTestContainer should", () => {
     await container.RunTest(testsToRunId);
     verify(mockRunner.RunTest("Group1", "Test1")).called();
     verify(mockRunner.RunTest("Group2", "Test2")).called();
+  })
+
+  it("return a TestResult after run", async () => {
+    const mockRunner = createMockRunner("Exec1", "Group1.Test1 Group2.Test2");
+
+    const container = new CppUTestContainer([instance(mockRunner)], instance(mockSetting), instance(mockAdapter));
+
+    const allTests = await container.LoadTests();
+    const testToRun = (allTests[0].children[0] as TestSuiteInfo).children[0];
+    return expect(container.RunTest(testToRun.id)).to.be
+      .eventually.fulfilled
+      .and.to.have.deep.members([
+        { message: "", state: TestState.Passed },
+        { message: "", state: TestState.Passed }
+      ])
   })
 
   it("start the debugger for the given test", async () => {
