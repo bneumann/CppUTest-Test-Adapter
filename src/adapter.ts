@@ -4,12 +4,12 @@ import { Log } from 'vscode-test-adapter-util';
 import { killTestRun, getTestRunners, debugTest } from './legacyWrapper'
 import *  as fs from 'fs';
 
-import CppUTestContainer from "./CppUTestContainer";
+import CppUTestContainer from "./Domain/CppUTestContainer";
 import SettingsProvider from "./Infrastructure/SettingsProvider";
 import ExecutableRunner from "./Infrastructure/ExecutableRunner";
-import { CppUTestGroup } from './CppUTestGroup';
-import { NodeProcessExecuter } from './NodeProcessExecuter';
-import { TestState } from './TestState';
+import { CppUTestGroup } from './Domain/CppUTestGroup';
+import { NodeProcessExecuter } from './Application/NodeProcessExecuter';
+import { TestState } from './Domain/TestState';
 
 export class CppUTestAdapter implements TestAdapter {
 

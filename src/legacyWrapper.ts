@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { ChildProcess } from 'child_process';
 import { TestSuiteInfo, TestInfo} from 'vscode-test-adapter-api';
-import { CppUTestGroup } from "./CppUTestGroup";
+import { CppUTestGroup } from "./Domain/CppUTestGroup";
 import { glob } from 'glob';
 
 const processes: ChildProcess[] = Array<ChildProcess>();
