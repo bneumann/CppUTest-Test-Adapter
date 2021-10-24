@@ -27,24 +27,37 @@
     "clean": "rimraf out *.vsix",
     "build": "tsc",
     "watch": "tsc -w",
+    "test": "mocha --require ts-node/register **/*.spec.ts",
     "rebuild": "npm run clean && npm run build",
     "package": "vsce package",
-    "publish": "vsce publish"
+    "publish": "npm run rebuild && vsce publish",
+    "publish:patch": "npm run rebuild && vsce publish patch"
   },
   "dependencies": {
-    "@types/xml2js": "^0.4.5",
-    "tslib": "^1.9.3",
+    "@types/xml2js": "^0.4.9",
+    "glob": "^7.2.0",
+    "tslib": "^2.3.1",
     "vscode-test-adapter-api": "^1.9.0",
     "vscode-test-adapter-util": "^0.7.1",
-    "xml2js": "^0.4.22"
+    "xml2js": "^0.4.23"
   },
   "devDependencies": {
-    "@types/vscode": "~1.23.0",
-    "typescript": "^3.5.3",
-    "vsce": "^1.72.0"
+    "@types/chai": "^4.2.22",
+    "@types/chai-as-promised": "^7.1.4",
+    "@types/glob": "^7.1.4",
+    "@types/mocha": "^9.0.0",
+    "@types/vscode": "~1.61.0",
+    "chai": "^4.3.4",
+    "chai-as-promised": "^7.1.1",
+    "mocha": "^9.1.3",
+    "ts-mockito": "^2.6.1",
+    "ts-node": "^10.3.0",
+    "typescript": "^4.4.4",
+    "vsce": "^1.100.1",
+    "rimraf": "^3.0.2"
   },
   "engines": {
-    "vscode": "^1.23.0"
+    "vscode": "^1.61.0"
   },
   "extensionDependencies": [
     "hbenl.vscode-test-explorer"
@@ -58,7 +71,7 @@
       "title": "CppUTest Explorer configuration",
       "properties": {
         "cpputestExplorer.testExecutable": {
-          "description": "executable that contains all tests",
+          "description": "executable that contains all tests. Can be multiple executables separated by semicolon. Wildcard is supported (e.g. myExecutable;bin/test/ut_*)",
           "default": "",
           "type": "string",
           "scope": "resource"
