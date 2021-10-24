@@ -1,11 +1,11 @@
-import * as vscode from 'vscode';
-import { ChildProcess } from 'child_process';
-import { TestSuiteInfo, TestInfo} from 'vscode-test-adapter-api';
-import { CppUTestGroup } from "./Domain/CppUTestGroup";
-import { glob } from 'glob';
+// import * as vscode from 'vscode';
+// import { ChildProcess } from 'child_process';
+// import { TestSuiteInfo, TestInfo} from 'vscode-test-adapter-api';
+// import { CppUTestGroup } from "./Domain/CppUTestGroup";
+// import { glob } from 'glob';
 
-const processes: ChildProcess[] = Array<ChildProcess>();
-const mainSuite: CppUTestGroup = new CppUTestGroup("Main Suite");
+// const processes: ChildProcess[] = Array<ChildProcess>();
+// const mainSuite: CppUTestGroup = new CppUTestGroup("Main Suite");
 
 // export function loadTests(): Promise<TestSuiteInfo> {
 //     return new Promise<TestSuiteInfo>((resolve, reject) => {
@@ -84,39 +84,39 @@ const mainSuite: CppUTestGroup = new CppUTestGroup("Main Suite");
 //     }
 // }
 
-export function killTestRun() {
-    processes.forEach(p => p.kill("SIGTERM"));
-}
+// export function killTestRun() {
+//     processes.forEach(p => p.kill("SIGTERM"));
+// }
 
-export async function debugTest(tests: string[]) {
-    const config = getDebugConfiguration();
-    if (config === "") {
-        throw new Error("No debug configuration found. Not able to debug!");
-    }
-    for (const suiteOrTestId of tests) {
-        const node = findNode(mainSuite, suiteOrTestId);
-        if (node) {
-            (config as any).name = node.id;
-            const arg: string = node.id.search(/\./) >= 0 ? "-t" : "-sg";
-            (config as any).args = [arg, node.id];
-            if (vscode.workspace.workspaceFolders) {
-                await vscode.debug.startDebugging(vscode.workspace.workspaceFolders[0], config);
-            }
-        }
-    }
-}
+// export async function debugTest(tests: string[]) {
+//     const config = getDebugConfiguration();
+//     if (config === "") {
+//         throw new Error("No debug configuration found. Not able to debug!");
+//     }
+//     for (const suiteOrTestId of tests) {
+//         const node = findNode(mainSuite, suiteOrTestId);
+//         if (node) {
+//             (config as any).name = node.id;
+//             const arg: string = node.id.search(/\./) >= 0 ? "-t" : "-sg";
+//             (config as any).args = [arg, node.id];
+//             if (vscode.workspace.workspaceFolders) {
+//                 await vscode.debug.startDebugging(vscode.workspace.workspaceFolders[0], config);
+//             }
+//         }
+//     }
+// }
 
-function findNode(searchNode: TestSuiteInfo | TestInfo, id: string): TestSuiteInfo | TestInfo | undefined {
-    if (searchNode.id === id) {
-        return searchNode;
-    } else if (searchNode.type === 'suite') {
-        for (const child of searchNode.children) {
-            const found = findNode(child, id);
-            if (found) return found;
-        }
-    }
-    return undefined;
-}
+// function findNode(searchNode: TestSuiteInfo | TestInfo, id: string): TestSuiteInfo | TestInfo | undefined {
+//     if (searchNode.id === id) {
+//         return searchNode;
+//     } else if (searchNode.type === 'suite') {
+//         for (const child of searchNode.children) {
+//             const found = findNode(child, id);
+//             if (found) return found;
+//         }
+//     }
+//     return undefined;
+// }
 
 // async function runNode(
 //     node: TestSuiteInfo | TestInfo,
@@ -186,78 +186,78 @@ function findNode(searchNode: TestSuiteInfo | TestInfo, id: string): TestSuiteIn
 // }
 
 
-export function getTestRunners(): string[] {
-    const runner: string | undefined = vscode.workspace.getConfiguration("cpputestExplorer").testExecutable;
-    const runners: string[] = splitRunners(runner);
-    return runners.map(runner => resolveSettingsVariable(runner));
-}
+// export function getTestRunners(): string[] {
+//     const runner: string | undefined = vscode.workspace.getConfiguration("cpputestExplorer").testExecutable;
+//     const runners: string[] = splitRunners(runner);
+//     return runners.map(runner => resolveSettingsVariable(runner));
+// }
 
-export function getTestPath(): string {
-    const path: string | undefined = vscode.workspace.getConfiguration("cpputestExplorer").testExecutablePath;
-    return resolveSettingsVariable(path);
+// export function getTestPath(): string {
+//     const path: string | undefined = vscode.workspace.getConfiguration("cpputestExplorer").testExecutablePath;
+//     return resolveSettingsVariable(path);
 
-}
+// }
 
-function splitRunners(executablesString: string | undefined): string[] {
-    if (executablesString) {
-        return executablesString
-            .split(";")
-            .map(r => glob.sync(r))
-            .reduce((flatten, arr) => [...flatten, ...arr]);
-    } else {
-        return [];
-    }
-}
+// function splitRunners(executablesString: string | undefined): string[] {
+//     if (executablesString) {
+//         return executablesString
+//             .split(";")
+//             .map(r => glob.sync(r))
+//             .reduce((flatten, arr) => [...flatten, ...arr]);
+//     } else {
+//         return [];
+//     }
+// }
 
-/**
- * This function converts some of the VSCode variables like workspaceFolder
- * into their correspoing values. This is a workaround for https://github.com/microsoft/vscode/issues/46471
- * @param input Input string from settings.json
- */
-function resolveSettingsVariable(input: string | undefined): string {
-    if (input) {
-        const result: string[] | null = input.match(/\$\{(.*)\}/gmi);
-        if (result && result.length > 0) {
-            input = input.replace(/(\$\{file\})/gmi, vscode.window.activeTextEditor ? vscode.window.activeTextEditor.document.uri.fsPath : "");
-            input = input.replace(/(\$\{workspaceFolder\})/gmi, vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders[0].uri.fsPath : "");
-        }
-        return input;
-    }
-    else {
-        return "";
-    }
-}
+// /**
+//  * This function converts some of the VSCode variables like workspaceFolder
+//  * into their correspoing values. This is a workaround for https://github.com/microsoft/vscode/issues/46471
+//  * @param input Input string from settings.json
+//  */
+// function resolveSettingsVariable(input: string | undefined): string {
+//     if (input) {
+//         const result: string[] | null = input.match(/\$\{(.*)\}/gmi);
+//         if (result && result.length > 0) {
+//             input = input.replace(/(\$\{file\})/gmi, vscode.window.activeTextEditor ? vscode.window.activeTextEditor.document.uri.fsPath : "");
+//             input = input.replace(/(\$\{workspaceFolder\})/gmi, vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders[0].uri.fsPath : "");
+//         }
+//         return input;
+//     }
+//     else {
+//         return "";
+//     }
+// }
 
-function getDebugConfiguration(): (vscode.DebugConfiguration | string) {
-    // Thanks to: https://github.com/matepek/vscode-catch2-test-adapter/blob/9a2e9f5880ef3907d80ff99f3d6d028270923c95/src/Configurations.ts#L125
-    if (vscode.workspace.workspaceFolders === undefined) {
-        return "";
-    }
-    const wpLaunchConfigs: string | undefined = vscode.workspace
-        .getConfiguration('launch', vscode.workspace.workspaceFolders[0].uri)
-        .get<string>('configurations');
-    if (wpLaunchConfigs && Array.isArray(wpLaunchConfigs) && wpLaunchConfigs.length > 0) {
-        for (let i = 0; i < wpLaunchConfigs.length; ++i) {
-            if (IsCCppDebugger(wpLaunchConfigs[i])) {
-                const debugConfig: vscode.DebugConfiguration = Object.assign({}, wpLaunchConfigs[i], {
-                    program: getTestRunners(),
-                    target: getTestRunners()
-                });
-                return debugConfig;
-            }
-        }
-    }
-    return "";
-}
+// function getDebugConfiguration(): (vscode.DebugConfiguration | string) {
+//     // Thanks to: https://github.com/matepek/vscode-catch2-test-adapter/blob/9a2e9f5880ef3907d80ff99f3d6d028270923c95/src/Configurations.ts#L125
+//     if (vscode.workspace.workspaceFolders === undefined) {
+//         return "";
+//     }
+//     const wpLaunchConfigs: string | undefined = vscode.workspace
+//         .getConfiguration('launch', vscode.workspace.workspaceFolders[0].uri)
+//         .get<string>('configurations');
+//     if (wpLaunchConfigs && Array.isArray(wpLaunchConfigs) && wpLaunchConfigs.length > 0) {
+//         for (let i = 0; i < wpLaunchConfigs.length; ++i) {
+//             if (IsCCppDebugger(wpLaunchConfigs[i])) {
+//                 const debugConfig: vscode.DebugConfiguration = Object.assign({}, wpLaunchConfigs[i], {
+//                     program: getTestRunners(),
+//                     target: getTestRunners()
+//                 });
+//                 return debugConfig;
+//             }
+//         }
+//     }
+//     return "";
+// }
 
-function IsCCppDebugger(config: any) {
-    const isWin = process.platform === "win32";
-    // This is my way of saying: If we are using windows check for a config that has an .exe program.
-    const executionExtension: boolean = isWin ? config.program.endsWith(".exe") : true;
-    return config.request == 'launch' &&
-        typeof config.type == 'string' &&
-        executionExtension &&
-        (config.type.startsWith('cpp') ||
-            config.type.startsWith('lldb') ||
-            config.type.startsWith('gdb'));
-}
+// function IsCCppDebugger(config: any) {
+//     const isWin = process.platform === "win32";
+//     // This is my way of saying: If we are using windows check for a config that has an .exe program.
+//     const executionExtension: boolean = isWin ? config.program.endsWith(".exe") : true;
+//     return config.request == 'launch' &&
+//         typeof config.type == 'string' &&
+//         executionExtension &&
+//         (config.type.startsWith('cpp') ||
+//             config.type.startsWith('lldb') ||
+//             config.type.startsWith('gdb'));
+// }

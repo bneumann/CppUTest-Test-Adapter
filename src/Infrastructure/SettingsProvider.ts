@@ -4,5 +4,5 @@ export interface SettingsProvider {
   GetTestRunners(): string[];
   GetTestPath(): string;
   GetDebugConfiguration(): (DebugConfiguration | string);
-  GetWorkspaceFolders(): WorkspaceFolder[]
+  GetWorkspaceFolders(): WorkspaceFolder[] | undefined
 }

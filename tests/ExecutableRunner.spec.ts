@@ -28,7 +28,7 @@ const debugStrings = [
   }
 ]
 
-const createFailingTestString = (group: string, test: string): string => {
+function createFailingTestString(group: string, test: string): string {
   return `TEST(${group}, ${test})\n` +
     `/home/user/test/myTests/.cpp(58): error: Failure in TEST(${group}, ${test})\n` +
     "Message: This is failing\n" +

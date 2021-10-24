@@ -11,6 +11,10 @@ export default class VscodeSettingsProvider implements SettingsProvider {
     this.ExecutablePath = config.testExecutablePath;
   }
 
+  GetWorkspaceFolders(): vscode.WorkspaceFolder[] | undefined {
+    return vscode.workspace.workspaceFolders;
+  }
+
   public GetTestRunners(): string[] {
     const runners: string[] = this.SplitRunners(this.Executables);
     return runners.map(runner => this.ResolveSettingsVariable(runner));

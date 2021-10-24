@@ -5,7 +5,7 @@ export class CppUTest implements TestInfo {
   type: "test" = "test";
   id: string;
   label: string;
-  group?: string;
+  group: string;
   description?: string | undefined;
   tooltip?: string | undefined;
   file?: string | undefined;

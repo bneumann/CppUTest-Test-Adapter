@@ -1,15 +1,17 @@
 import * as vscode from 'vscode';
 import { TestAdapter, TestLoadStartedEvent, TestLoadFinishedEvent, TestRunStartedEvent, TestRunFinishedEvent, TestSuiteEvent, TestEvent, RetireEvent } from 'vscode-test-adapter-api';
 import { Log } from 'vscode-test-adapter-util';
-import { killTestRun, getTestRunners, debugTest } from './legacyWrapper'
-import *  as fs from 'fs';
 
 import CppUTestContainer from "./Domain/CppUTestContainer";
+import { CppUTestGroup } from './Domain/CppUTestGroup';
+import { TestState } from './Domain/TestState';
+import { TestResult } from './Domain/TestResult';
+import { CppUTest } from './Domain/CppUTest';
+import { RegexResultParser } from "./Domain/RegexResultParser";
 import VscodeSettingsProvider from "./Infrastructure/VscodeSettingsProvider";
 import ExecutableRunner from "./Infrastructure/ExecutableRunner";
-import { CppUTestGroup } from './Domain/CppUTestGroup';
 import { NodeProcessExecuter } from './Application/NodeProcessExecuter';
-import { TestState } from './Domain/TestState';
+import { VscodeAdapterImplementation } from "./Application/VscodeAdapterImplementation";
 
 export class CppUTestAdapter implements TestAdapter {
 
@@ -18,7 +20,7 @@ export class CppUTestAdapter implements TestAdapter {
 	private readonly testsEmitter = new vscode.EventEmitter<TestLoadStartedEvent | TestLoadFinishedEvent>();
 	private readonly testStatesEmitter = new vscode.EventEmitter<TestRunStartedEvent | TestRunFinishedEvent | TestSuiteEvent | TestEvent>();
 	private readonly autorunEmitter = new vscode.EventEmitter<RetireEvent>();
-	private readonly mainSuite = new CppUTestGroup("Main Suite");
+	private readonly mainSuite: CppUTestGroup;
 	private readonly root: CppUTestContainer;
 
 
@@ -33,43 +35,29 @@ export class CppUTestAdapter implements TestAdapter {
 
 		this.log.info('Initializing adapter');
 
-		this.disposables.push(this.testsEmitter);
-		this.disposables.push(this.testStatesEmitter);
-		this.disposables.push(this.autorunEmitter);
+		this.disposables.push(this.testsEmitter, this.testStatesEmitter, this.autorunEmitter);
 
 		const settingsProvider = new VscodeSettingsProvider(vscode.workspace.getConfiguration("cpputestExplorer"));
 		const processExecuter = new NodeProcessExecuter();
-		this.root = new CppUTestContainer(settingsProvider, processExecuter);
+		const vscodeAdapter = new VscodeAdapterImplementation();
+		const runners = settingsProvider.GetTestRunners().map(runner => new ExecutableRunner(processExecuter, runner));
+		const resultParser = new RegexResultParser();
 
-		this.root.OnTestStart = test => {
-			const event: TestEvent = {
-				type: 'test',
-				test,
-				state: "running"
-			};
-			this.testStatesEmitter.fire(event)
-		}
+		this.root = new CppUTestContainer(runners, settingsProvider, vscodeAdapter, resultParser);
+		this.root.OnTestFinish = this.handleTestFinished;
+		this.root.OnTestStart = this.handleTestStarted;
 
-		this.root.OnTestFinish = (test, testResult) => {
-			const event: TestEvent = {
-				type: 'test',
-				test: test,
-				state: testResult.state === TestState.Failed ? "failed" : "passed",
-				message: testResult.message
-			};
-			this.testStatesEmitter.fire(event)
-		}
-		const runners: string[] = getTestRunners();
-		runners.forEach(runner => fs.watchFile(<fs.PathLike>runner, (cur: fs.Stats, prev: fs.Stats) => {
-			if (cur.mtimeMs !== prev.mtimeMs) {
-				this.log.info("Executable changed, updating test cases");
-				this.load();
-				// this.autorunEmitter.fire();
-			}
-		}));
+		this.mainSuite = new CppUTestGroup("Main Suite");
+		// runners.forEach(runner => fs.watchFile(<fs.PathLike>runner, (cur: fs.Stats, prev: fs.Stats) => {
+		// 	if (cur.mtimeMs !== prev.mtimeMs) {
+		// 		this.log.info("Executable changed, updating test cases");
+		// 		this.load();
+		// 		// this.autorunEmitter.fire();
+		// 	}
+		// }));
 	}
 
-	async load(): Promise<void> {
+	public async load(): Promise<void> {
 		this.testsEmitter.fire(<TestLoadStartedEvent>{ type: 'started' });
 		this.log.info('Loading tests');
 
@@ -81,7 +69,7 @@ export class CppUTestAdapter implements TestAdapter {
 		this.testsEmitter.fire(<TestLoadFinishedEvent>{ type: 'finished', suite: this.mainSuite });
 	}
 
-	async run(tests: string[]): Promise<void> {
+	public async run(tests: string[]): Promise<void> {
 		this.testStatesEmitter.fire(<TestRunStartedEvent>{ type: 'started', tests });
 		this.log.info('Running tests');
 		if (tests.length == 1 && tests[0] == this.mainSuite.id) {
@@ -93,21 +81,39 @@ export class CppUTestAdapter implements TestAdapter {
 		this.testStatesEmitter.fire(<TestRunFinishedEvent>{ type: 'finished' });
 	}
 
-	async debug(tests: string[]): Promise<void> {
-		// start a test run in a child process and attach the debugger to it...
-		await debugTest(tests);
+	public async debug(tests: string[]): Promise<void> {
+		return this.root.DebugTest(...tests);
 	}
 
-	cancel(): void {
-		killTestRun();
+	public cancel(): void {
+		this.root.KillRunningProcesses();
 		this.testStatesEmitter.fire(<TestRunFinishedEvent>{ type: 'finished' });
 	}
 
-	dispose(): void {
+	public dispose(): void {
 		this.cancel();
 		for (const disposable of this.disposables) {
 			disposable.dispose();
 		}
 		this.disposables = [];
+	}
+
+	private handleTestStarted(test: CppUTest): void {
+		const event: TestEvent = {
+			type: 'test',
+			test,
+			state: "running"
+		};
+		this.testStatesEmitter.fire(event)
+	}
+
+	private handleTestFinished(test: CppUTest, testResult: TestResult): void {
+		const event: TestEvent = {
+			type: 'test',
+			test: test,
+			state: testResult.state === TestState.Failed ? "failed" : "passed",
+			message: testResult.message
+		};
+		this.testStatesEmitter.fire(event)
 	}
 }

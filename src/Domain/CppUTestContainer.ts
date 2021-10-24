@@ -1,19 +1,20 @@
+import { DebugConfiguration } from "vscode";
 import { CppUTestGroup } from "./CppUTestGroup";
 import CppUTestSuite from "./CppUTestSuite";
 import { TestResult } from "./TestResult";
-import ExecutableRunner from "../Infrastructure/ExecutableRunner";
 import { CppUTest } from "./CppUTest";
 import { TestState } from "./TestState";
+import { ResultParser } from "./ResultParser";
+import ExecutableRunner from "../Infrastructure/ExecutableRunner";
 import { SettingsProvider } from "../Infrastructure/SettingsProvider";
 import { VscodeAdapter } from "../Infrastructure/VscodeAdapter";
-import { DebugConfiguration } from "vscode";
 
 export default class CppUTestContainer {
-
   private runners: ExecutableRunner[];
   private suites: Map<string, CppUTestGroup>;
   private settingsProvider: SettingsProvider;
   private vscodeAdapter: VscodeAdapter;
+  private resultParser: ResultParser;
   private onTestFinishHandler: (test: CppUTest, result: TestResult) => void = () => { };
   private onTestStartHandler: (test: CppUTest) => void = () => { };
   // private dirty: boolean;
@@ -24,10 +25,11 @@ export default class CppUTestContainer {
     this.onTestStartHandler = handler;
   }
 
-  constructor(runners: ExecutableRunner[], settingsProvider: SettingsProvider, vscodeAdapter: VscodeAdapter) {
+  constructor(runners: ExecutableRunner[], settingsProvider: SettingsProvider, vscodeAdapter: VscodeAdapter, resultParser: ResultParser) {
     this.settingsProvider = settingsProvider;
     this.runners = runners;
     this.vscodeAdapter = vscodeAdapter;
+    this.resultParser = resultParser;
     this.suites = new Map<string, CppUTestGroup>();
   }
 
@@ -58,22 +60,28 @@ export default class CppUTestContainer {
   public async RunTest(...testId: string[]): Promise<TestResult[]> {
     const testList = await this.LoadTests();
     const testResults: TestResult[] = new Array<TestResult>();
+    const testsToRun: CppUTest[] = new Array<CppUTest>();
     for (const executableGroup of testList) {
-      for (const testGroup of executableGroup.children) {
-        const tests: CppUTest[] = this.GetAllChildTestsById(testId, executableGroup);
-        const runner = this.runners.filter(r => r.Name === executableGroup.label)[0];
-        for (const test of tests) {
-          if (test && runner) {
-            this.onTestStartHandler((test as CppUTest));
-            await runner.RunTest(testGroup.label, test!.label);
-            const testResult = new TestResult(TestState.Passed, "");
-            this.onTestFinishHandler((test as CppUTest), testResult);
-            testResults.push(testResult);
-          }
+      testsToRun.splice(0, testsToRun.length);
+      if (testId.includes(executableGroup.id)) {
+        testsToRun.push(...executableGroup.Tests);
+      } else {
+        for (const testGroup of executableGroup.children) {
+          testsToRun.push(...this.GetAllChildTestsById(testId, (testGroup as CppUTestGroup)));
+        }
+      }
+      const runner = this.runners.filter(r => r.Name === executableGroup.label)[0];
+      for (const test of testsToRun) {
+        if (test && runner) {
+          this.onTestStartHandler(test);
+          const resultString = await runner.RunTest(test.group, test.label);
+          const testResult = this.resultParser.GetResult(resultString);
+          this.onTestFinishHandler(test, testResult);
+          testResults.push(testResult);
         }
       }
     }
-    if(testResults.length > 0){
+    if (testResults.length > 0) {
       return testResults;
     }
     return [new TestResult(TestState.Failed, "Unable to run or find test")];
@@ -94,19 +102,21 @@ export default class CppUTestContainer {
       const runner = this.runners.filter(r => r.Name === executableGroup.label)[0];
       for (const test of tests) {
         if (test && runner) {
-          this.onTestStartHandler((test as CppUTest));
           const testRunName = `${test.group}.${test.label}`;
           (config as DebugConfiguration).name = testRunName;
           (config as DebugConfiguration).args = ["-t", testRunName];
           await this.vscodeAdapter.StartDebugger(workspaceFolders, config);
-          this.onTestFinishHandler((test as CppUTest), new TestResult(TestState.Passed, ""));
         }
       }
     }
   }
 
-  private GetAllChildTestsById(testId: string[], executableGroup: CppUTestGroup): CppUTest[] {
-    const tests: CppUTest[][] = testId.map(id => (executableGroup as CppUTestGroup).FindTest(id));
+  public KillRunningProcesses() {
+    this.runners.forEach(r => r.KillProcess());
+  }
+
+  private GetAllChildTestsById(testId: string[], testGroup: CppUTestGroup): CppUTest[] {
+    const tests: CppUTest[][] = testId.map(id => (testGroup as CppUTestGroup).FindTest(id));
     return Array<CppUTest>().concat(...tests);
   }
 
