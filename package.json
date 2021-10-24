@@ -57,7 +57,7 @@
     "rimraf": "^3.0.2"
   },
   "engines": {
-    "vscode": "^1.23.0"
+    "vscode": "^1.61.0"
   },
   "extensionDependencies": [
     "hbenl.vscode-test-explorer"
