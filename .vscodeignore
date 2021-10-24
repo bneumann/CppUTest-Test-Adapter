@@ -10,3 +10,4 @@ build_linux
 bin
 CMakeLists.txt
 test
+tests

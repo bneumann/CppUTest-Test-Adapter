@@ -1,0 +1,44 @@
+[
+        {
+                "name": "failingTest1",
+                "value": [
+                        "TEST(ClassName, Create)\n",
+                        "C:\\Users\\tests\\basicTests.cpp(58): error: Failure in TEST(ClassName, Create)",
+                        "        Message: This is failing",
+                        "        CHECK(false) failed",
+                        "- 0 ms"
+                ],
+                "expected": [
+                        "C:\\Users\\tests\\basicTests.cpp(58): error: Failure in TEST(ClassName, Create)",
+                        "        Message: This is failing",
+                        "        CHECK(false) failed"
+                ]
+        },
+        {
+                "name": "failingTest2",
+                "value": [
+                        "/tests/basicTests.cpp(43): error: Failure in TEST(SecondClass, ShouldFail)",
+                        "Message: This is also failing",
+                        "CHECK(false) failed",
+                        "- 0 ms"
+                ],
+                "expected": [
+                        "Message: This is also failing",
+                        "CHECK(false) failed"
+                ]
+        },
+        {
+                "name": "passingTest1",
+                "value": [
+                        "TEST(ClassName, ShouldPass) - 0 ms"
+                ],
+                "expected": [""]
+        },
+        {
+                "name": "ignoredTest1",
+                "value": [
+                        "IGNORE_TEST(SecondClass, ShouldBeIgnored) - 0 ms"
+                ],
+                "expected": [""]
+        }
+]
