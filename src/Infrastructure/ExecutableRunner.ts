@@ -19,6 +19,8 @@ export default class ExecutableRunner {
     this.Name = basename(command);
   }
 
+  public get Command(): string { return this.command; }
+
   public GetTestList(): Promise<string> {
     return new Promise<string>((resolve, reject) => this.execFile(this.command, ["-ln"], { cwd: this.workingDirectory }, (error: any, stdout: any, stderr: any) => {
       if (error) {

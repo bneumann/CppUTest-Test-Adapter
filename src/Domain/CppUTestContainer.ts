@@ -1,4 +1,4 @@
-import { DebugConfiguration } from "vscode";
+import { DebugConfiguration, WorkspaceFolder } from "vscode";
 import { CppUTestGroup } from "./CppUTestGroup";
 import CppUTestSuite from "./CppUTestSuite";
 import { TestResult } from "./TestResult";
@@ -40,21 +40,22 @@ export default class CppUTestContainer {
       ));
   }
 
-  public async RunAllTests(): Promise<string[]> {
+  public async RunAllTests(): Promise<TestResult[]> {
     const testList = await this.LoadTests();
-    const returnString = [];
+    const testResults: TestResult[] = new Array<TestResult>();
     for (const executableGroup of testList) {
       for (const testGroup of executableGroup.children) {
         for (const test of (testGroup as CppUTestGroup).children) {
           const runner = this.runners.filter(r => r.Name === executableGroup.label)[0];
           this.onTestStartHandler((test as CppUTest));
-          const testReturnString = await runner.RunTest(testGroup.label, test.label);
-          this.onTestFinishHandler((test as CppUTest), new TestResult(TestState.Passed, ""));
-          returnString.push(testReturnString);
+          const resultString = await runner.RunTest(testGroup.label, test.label);
+          const testResult = this.resultParser.GetResult(resultString);
+          this.onTestFinishHandler((test as CppUTest), testResult);
+          testResults.push(testResult);
         }
       }
     }
-    return returnString;
+    return testResults;
   }
 
   public async RunTest(...testId: string[]): Promise<TestResult[]> {
@@ -105,7 +106,8 @@ export default class CppUTestContainer {
           const testRunName = `${test.group}.${test.label}`;
           (config as DebugConfiguration).name = testRunName;
           (config as DebugConfiguration).args = ["-t", testRunName];
-          await this.vscodeAdapter.StartDebugger(workspaceFolders, config);
+          (config as DebugConfiguration).program = runner.Command;
+          await this.vscodeAdapter.StartDebugger((workspaceFolders as WorkspaceFolder[]), config);
         }
       }
     }

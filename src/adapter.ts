@@ -44,8 +44,8 @@ export class CppUTestAdapter implements TestAdapter {
 		const resultParser = new RegexResultParser();
 
 		this.root = new CppUTestContainer(runners, settingsProvider, vscodeAdapter, resultParser);
-		this.root.OnTestFinish = this.handleTestFinished;
-		this.root.OnTestStart = this.handleTestStarted;
+		this.root.OnTestFinish = this.handleTestFinished.bind(this);
+		this.root.OnTestStart = this.handleTestStarted.bind(this);
 
 		this.mainSuite = new CppUTestGroup("Main Suite");
 		// runners.forEach(runner => fs.watchFile(<fs.PathLike>runner, (cur: fs.Stats, prev: fs.Stats) => {
@@ -99,21 +99,44 @@ export class CppUTestAdapter implements TestAdapter {
 	}
 
 	private handleTestStarted(test: CppUTest): void {
-		const event: TestEvent = {
-			type: 'test',
-			test,
-			state: "running"
-		};
+		const event = this.mapTestResultToTestEvent(test);
 		this.testStatesEmitter.fire(event)
 	}
 
 	private handleTestFinished(test: CppUTest, testResult: TestResult): void {
-		const event: TestEvent = {
+		const event = this.mapTestResultToTestEvent(test, testResult);
+		this.testStatesEmitter.fire(event)
+	}
+
+	private mapTestResultToTestEvent(test: CppUTest, testResult?: TestResult): TestEvent {
+		let state: "running" | "passed" | "failed" | "skipped" | "errored" = "running";
+		if (!testResult) {
+			return {
+				type: "test",
+				state,
+				test
+			};
+		}
+		switch (testResult.state) {
+			case TestState.Errored:
+			case TestState.Unknown:
+				state = "errored";
+				break;
+			case TestState.Failed:
+				state = "failed";
+				break;
+			case TestState.Skipped:
+				state = "skipped";
+				break;
+			default:
+				state = "passed";
+				break;
+		}
+		return {
 			type: 'test',
-			test: test,
-			state: testResult.state === TestState.Failed ? "failed" : "passed",
+			test,
+			state,
 			message: testResult.message
 		};
-		this.testStatesEmitter.fire(event)
 	}
 }

@@ -3,11 +3,12 @@ import { TestState } from "./TestState";
 import { ResultParser } from "./ResultParser";
 
 export class RegexResultParser implements ResultParser {
-  private readonly regexPattern: RegExp = /(\w*)_*TEST\((\w*), (\w*)\)(.*?)- (\d*) ms/gs;
 
   public GetResult(resultString: string): TestResult {
-    const result: RegExpExecArray | null = this.regexPattern.exec(resultString);
+    const regexPattern: RegExp = /(\w*)_*TEST\((\w*), (\w*)\)(.*?)- (\d*) ms/gs;
+    const result: RegExpExecArray | null = regexPattern.exec(resultString);
     if (result == null) {
+      console.error(`Cannot parse ${resultString} with RegexResultParser`);
       return new TestResult(TestState.Unknown, "");
     }
     else {
