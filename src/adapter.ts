@@ -61,6 +61,7 @@ export class CppUTestAdapter implements TestAdapter {
 		this.testsEmitter.fire(<TestLoadStartedEvent>{ type: 'started' });
 		this.log.info('Loading tests');
 
+		this.root.ClearTests();
 		const loadedTests = await this.root.LoadTests();
 
 		this.log.info('Tests loaded');
