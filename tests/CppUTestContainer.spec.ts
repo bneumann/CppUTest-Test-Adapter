@@ -45,6 +45,14 @@ describe("CppUTestContainer should", () => {
     expect((allTests[1].children[1] as CppUTestGroup).children[0].label).to.be.eq("Test42");
   })
 
+  it("reload all tests after clear", async () => {
+    const container = new CppUTestContainer([instance(mockRunner)], instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
+    const testList1 = await container.LoadTests();
+    container.ClearTests()
+    const testList2 = await container.LoadTests();
+    expect(JSON.stringify(testList1)).to.be.not.eq(JSON.stringify(testList2));
+  })
+
   it("get the same id on consecutive loads", async () => {
     const container = new CppUTestContainer([instance(mockRunner)], instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
     const testList1 = await container.LoadTests();
@@ -163,16 +171,41 @@ describe("CppUTestContainer should", () => {
     };
     when(mockSetting.GetWorkspaceFolders()).thenReturn([instance(mockFolder)]);
     when(mockSetting.GetDebugConfiguration()).thenReturn(debugConfigSpy);
+    when(mockRunner.Command).thenReturn("myProgram");
     const container = new CppUTestContainer([instance(mockRunner)], instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
 
     const allTests = await container.LoadTests();
     expect(allTests).to.have.lengthOf(1);
-    const testsToRunId = allTests[0].id;
+    const testsToRunId = (allTests[0].children[0] as CppUTestGroup).children[0].id;
 
     await container.DebugTest(testsToRunId);
     verify(mockAdapter.StartDebugger(anything(), anything())).called();
-    expect((debugConfigSpy as any).name).to.be.eq("Group2.Test2");
-    expect((debugConfigSpy as any).args).to.be.deep.eq(["-t", "Group2.Test2"]);
+    expect((debugConfigSpy as DebugConfiguration).name).to.be.eq("Group1.Test1");
+    expect((debugConfigSpy as DebugConfiguration).args).to.be.deep.eq(["-t", "Group1.Test1"]);
+    expect((debugConfigSpy as DebugConfiguration).program).to.be.deep.eq("myProgram");
+  })
+
+  it("start the debugger for a given test group", async () => {
+    const mockFolder = mock<WorkspaceFolder>();
+    const debugConfigSpy = <DebugConfiguration>{
+      name: "",
+      request: "",
+      type: ""
+    };
+    when(mockSetting.GetWorkspaceFolders()).thenReturn([instance(mockFolder)]);
+    when(mockSetting.GetDebugConfiguration()).thenReturn(debugConfigSpy);
+    when(mockRunner.Command).thenReturn("myProgram");
+    const container = new CppUTestContainer([instance(mockRunner)], instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
+
+    const allTests = await container.LoadTests();
+    expect(allTests).to.have.lengthOf(1);
+    const testsToRunId = allTests[0].children[0].id;
+
+    await container.DebugTest(testsToRunId);
+    verify(mockAdapter.StartDebugger(anything(), anything())).called();
+    expect((debugConfigSpy as DebugConfiguration).name).to.be.eq("Group1");
+    expect((debugConfigSpy as DebugConfiguration).args).to.be.deep.eq(["-sg", "Group1"]);
+    expect((debugConfigSpy as DebugConfiguration).program).to.be.deep.eq("myProgram");
   })
 
   it("thrown an error if the debugger is started without config", async () => {

@@ -30,11 +30,11 @@ const symbolStrings = [
 ];
 
 describe('CppUTestSuite should', () => {
-  const parser = new CppUTestSuite("Label");
+  const suite = new CppUTestSuite("Label");
 
   it('create a TestSuite from an test list string', () => {
     const testListString = "Group1.Test1 Group1.Test2 Group2.Test1";
-    const testSuite = parser.CreateTestGroupsFromTestListString(testListString);
+    const testSuite = suite.CreateTestGroupsFromTestListString(testListString);
     expect(testSuite.label).to.be.equal("Label");
     expect(testSuite.children.length).to.be.eq(2);
     expect(testSuite.children[0].label).to.be.equal("Group1");
@@ -44,8 +44,8 @@ describe('CppUTestSuite should', () => {
 
   symbolStrings.forEach(symbolString =>
     it(`create debug information from symbol definition string for ${symbolString.test.label}`, () => {
-      parser.AddDebugInformationToTest(symbolString.test, symbolString.value);
+      suite.AddDebugInformationToTest(symbolString.test, symbolString.value);
       expect(symbolString.test.file).to.be.equal("/tmp/myPath/basicTests.cpp");
-      expect(symbolString.test.line).to.be.equal(54);
+      expect(symbolString.test.line).to.be.equal(56);
     }))
 });

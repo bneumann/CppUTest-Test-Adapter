@@ -3,7 +3,7 @@ import { CppUTest } from './CppUTest';
 import { CppUTestGroup } from './CppUTestGroup';
 
 export default class CppUTestSuite {
-  private groupLabel: string;
+  private readonly groupLabel: string;
 
   constructor(groupLabel: string) {
     this.groupLabel = groupLabel;
@@ -19,13 +19,14 @@ export default class CppUTestSuite {
     return subSuite;
   }
 
-  private CreateGroupAndTests(suite: CppUTestGroup, group: string, test: string): CppUTestGroup {
-    let testGroup = suite.children.find(c => c.label === group);
+  private CreateGroupAndTests(suite: CppUTestGroup, groupName: string, testName: string): CppUTestGroup {
+    let testGroup = suite.children.find(c => c.label === groupName);
     if (!testGroup) {
-      testGroup = new CppUTestGroup(group);
+      testGroup = new CppUTestGroup(groupName);
       suite.children.push(testGroup);
     }
-    (testGroup as TestSuiteInfo).children.unshift(new CppUTest(test, group));
+    const test = new CppUTest(testName, groupName);
+    (testGroup as TestSuiteInfo).children.unshift(test);
     return (testGroup as CppUTestGroup);
   }
 
@@ -34,7 +35,7 @@ export default class CppUTestSuite {
     const filePath = symbolInformationLines.filter(si => si.startsWith("/"))[0];
     const debugSymbols: string[] = filePath.split(":");
     const file = debugSymbols[0];
-    const line = parseInt(debugSymbols[1], 10) - 2; // show it above the test
+    const line = parseInt(debugSymbols[1], 10);
     test.file = file;
     test.line = line;
   }
