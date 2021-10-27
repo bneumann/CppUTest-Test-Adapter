@@ -36,8 +36,13 @@ export default class CppUTestContainer {
   public LoadTests(): Promise<CppUTestGroup[]> {
     return Promise.all(this.runners
       .map(runner => runner.GetTestList()
-        .then(testString => this.EmbedInRunnerGroup(runner.Name, testString))
+        .then(testString => this.EmbedInRunnerGroup(runner, testString))
+        .catch(error => new CppUTestGroup("ERROR ON LOADING TESTS"))
       ));
+  }
+
+  public ClearTests() {
+    this.suites = new Map<string, CppUTestGroup>();
   }
 
   public async RunAllTests(): Promise<TestResult[]> {
@@ -75,10 +80,14 @@ export default class CppUTestContainer {
       for (const test of testsToRun) {
         if (test && runner) {
           this.onTestStartHandler(test);
-          const resultString = await runner.RunTest(test.group, test.label);
-          const testResult = this.resultParser.GetResult(resultString);
-          this.onTestFinishHandler(test, testResult);
-          testResults.push(testResult);
+          try {
+            const resultString = await runner.RunTest(test.group, test.label);
+            const testResult = this.resultParser.GetResult(resultString);
+            this.onTestFinishHandler(test, testResult);
+            testResults.push(testResult);
+          } catch (error) {
+            console.error(error);
+          }
         }
       }
     }
@@ -99,18 +108,34 @@ export default class CppUTestContainer {
     }
     const testList = await this.LoadTests();
     for (const executableGroup of testList) {
-      const tests: CppUTest[] = this.GetAllChildTestsById(testId, executableGroup);
+      const testOrGroup = this.GetGroupOrTest(testId, executableGroup);
       const runner = this.runners.filter(r => r.Name === executableGroup.label)[0];
-      for (const test of tests) {
-        if (test && runner) {
-          const testRunName = `${test.group}.${test.label}`;
-          (config as DebugConfiguration).name = testRunName;
-          (config as DebugConfiguration).args = ["-t", testRunName];
-          (config as DebugConfiguration).program = runner.Command;
-          await this.vscodeAdapter.StartDebugger((workspaceFolders as WorkspaceFolder[]), config);
-        }
+      if (testOrGroup && runner) {
+        const isTest = testOrGroup instanceof CppUTest;
+        const testRunName = isTest ? `${testOrGroup.group}.${testOrGroup.label}` : `${testOrGroup.label}`;
+        const testRunArg = isTest ? "-t" : "-sg";
+        (config as DebugConfiguration).name = testRunName;
+        (config as DebugConfiguration).args = [testRunArg, testRunName];
+        (config as DebugConfiguration).program = runner.Command;
+        (config as DebugConfiguration).target = runner.Command;
+        await this.vscodeAdapter.StartDebugger((workspaceFolders as WorkspaceFolder[]), config);
       }
     }
+  }
+
+  private GetGroupOrTest(testIds: string[], testEntity: CppUTestGroup | CppUTest): CppUTestGroup | CppUTest | undefined {
+    if (testEntity instanceof CppUTestGroup) {
+      for (const child of testEntity.children) {
+        const entity = this.GetGroupOrTest(testIds, (child as CppUTest | CppUTestGroup));
+        if (entity) return entity;
+      }
+    }
+    for (const testId of testIds) {
+      if (testEntity.id === testId) {
+        return testEntity;
+      }
+    }
+    return undefined;
   }
 
   public KillRunningProcesses() {
@@ -122,13 +147,21 @@ export default class CppUTestContainer {
     return Array<CppUTest>().concat(...tests);
   }
 
-  private EmbedInRunnerGroup(runnerName: string, testString: string): CppUTestGroup | PromiseLike<CppUTestGroup> {
-    if (this.suites.has(runnerName)) {
-      return (this.suites.get(runnerName) as CppUTestGroup);
+  private async EmbedInRunnerGroup(runner: ExecutableRunner, testString: string): Promise<CppUTestGroup> {
+    if (this.suites.has(runner.Name)) {
+      return (this.suites.get(runner.Name) as CppUTestGroup);
     }
-    const testFactory = new CppUTestSuite(runnerName);
+    const testFactory = new CppUTestSuite(runner.Name);
     const testGroup = testFactory.CreateTestGroupsFromTestListString(testString);
-    this.suites.set(runnerName, testGroup);
+    for(const test of testGroup.Tests) {
+      try {
+        const debugString = await runner.GetDebugSymbols(test.group, test.label);
+        testFactory.AddDebugInformationToTest(test, debugString);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    this.suites.set(runner.Name, testGroup);
     return testGroup;
   }
 }
