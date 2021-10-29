@@ -5,22 +5,33 @@ import { ResultParser } from "./ResultParser";
 export class RegexResultParser implements ResultParser {
 
   public GetResult(resultString: string): TestResult {
-    const regexPattern: RegExp = /(\w*)_*TEST\((\w*), (\w*)\)(.*?)- (\d*) ms/gs;
-    const result: RegExpExecArray | null = regexPattern.exec(resultString);
-    if (result == null) {
-      console.error(`Cannot parse ${resultString} with RegexResultParser`);
-      return new TestResult(TestState.Unknown, "");
-    }
-    else {
-      let state: TestState = TestState.Passed;
-      const message = result[4].trim();
-      if (result[1] == "IGNORE_") {
-        state = TestState.Skipped;
+    const lines = resultString.split("\n");
+    let state: TestState = TestState.Unknown;
+    let message = "";
+    for (const line of lines) {
+      const regexPattern: RegExp = /(\w*)_*TEST\((\w*), (\w*)\)/;
+      const match = regexPattern.exec(line);
+      if (match !== null) {
+        if (match[1] == "IGNORE_") {
+          state = TestState.Skipped;
+          return new TestResult(state, "");
+        } else {
+          state = TestState.Passed;
+        }
       }
-      if (message) {
+      if (line.includes("Failure in")) {
         state = TestState.Failed;
+        continue;
       }
-      return new TestResult(state, message);
+      if (state === TestState.Failed) {
+        if (line.trimRight() !== "") {
+          message = message.concat(line.trim(), "\n");
+        } else {
+          return new TestResult(state, message.trim());
+        }
+      }
+
     }
+    return new TestResult(state, message);
   }
 }
