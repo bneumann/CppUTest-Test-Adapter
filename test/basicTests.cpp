@@ -58,6 +58,13 @@ TEST(ClassName, Create)
   CHECK_TEXT(false, "This is failing");
 }
 
+TEST(ClassName, stdOutMessesWithOutputAndFails)
+{
+  printf("This will appear in the output");
+  int out = 24 + 74;
+  CHECK_EQUAL(17, out);
+}
+
 int main(int ac, char** av)
 {
     return CommandLineTestRunner::RunAllTests(ac, av);

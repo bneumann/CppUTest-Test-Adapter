@@ -2,29 +2,54 @@
         {
                 "name": "failingTest1",
                 "value": [
-                        "TEST(ClassName, Create)\n",
+                        "TEST(ClassName, Create)",
                         "C:\\Users\\tests\\basicTests.cpp(58): error: Failure in TEST(ClassName, Create)",
                         "        Message: This is failing",
                         "        CHECK(false) failed",
+                        "",
                         "- 0 ms"
                 ],
                 "expected": [
-                        "C:\\Users\\tests\\basicTests.cpp(58): error: Failure in TEST(ClassName, Create)",
-                        "        Message: This is failing",
-                        "        CHECK(false) failed"
+                        "Message: This is failing",
+                        "CHECK(false) failed"
                 ]
         },
         {
                 "name": "failingTest2",
                 "value": [
+                        "TEST(ClassName, Create)",
                         "/tests/basicTests.cpp(43): error: Failure in TEST(SecondClass, ShouldFail)",
                         "Message: This is also failing",
                         "CHECK(false) failed",
+                        "",
                         "- 0 ms"
                 ],
                 "expected": [
                         "Message: This is also failing",
                         "CHECK(false) failed"
+                ]
+        },
+        {
+                "name": "failingTest3",
+                "value": [
+                        "TEST(TEST_GROUP1, TEST1)Memutil uses static memory",
+                        "Memutil heap size = 0x4000000 (67108864 bytes)",
+                        "memutil_heap_ptr: addr=0x22a40c0",
+                        "memutil_heap_initialized ? true",
+                        "src/tests/omss_unit_tests/src/ut/ut_real/inventory_manager/TEST_GROUP1.cpp:51: error: Failure in TEST(TEST_GROUP1, TEST1)",
+                        "expected <0>",
+                        "but was <-2>",
+                        "difference starts at position 0 at: < -2 >",
+                        "^",
+                        "",
+                        "25 ms",
+                        "Errors (1 failures, 1283 tests, 1 ran, 79 checks, 0 ignored, 1282 filtered out, 25 ms)"
+                ],
+                "expected":[
+                        "expected <0>",
+                        "but was <-2>",
+                        "difference starts at position 0 at: < -2 >",
+                        "^"
                 ]
         },
         {
@@ -35,9 +60,30 @@
                 "expected": [""]
         },
         {
+                "name": "passingTest2",
+                "value":[
+                        "TEST(TEST_GROUP1, ouptpuTEST1)Memutil uses static memory",
+                        "Memutil heap size = 0x4000000 (67108864 bytes)",
+                        "memutil_heap_ptr: addr=0x22a40c0\nmemutil_heap_initialized ? true",
+                        "- 26 ms",
+                        "",
+                        "OK (1283 tests, 1 ran, 79 checks, 0 ignored, 1282 filtered out, 26 ms)"
+                ],
+                "expected": [""]
+        },
+        {
                 "name": "ignoredTest1",
                 "value": [
                         "IGNORE_TEST(SecondClass, ShouldBeIgnored) - 0 ms"
+                ],
+                "expected": [""]
+        },
+        {
+                "name":"ignoredTest2",
+                "value":[
+                        "IGNORE_TEST(TEST_GROUP1, TEST1) - 0 ms",
+                        "",
+                        "OK (1283 tests, 0 ran, 0 checks, 1 ignored, 1282 filtered out, 0 ms)"
                 ],
                 "expected": [""]
         }
