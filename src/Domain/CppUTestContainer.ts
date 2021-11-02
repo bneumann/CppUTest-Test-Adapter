@@ -24,6 +24,9 @@ export default class CppUTestContainer {
   public set OnTestStart(handler: (test: CppUTest) => void) {
     this.onTestStartHandler = handler;
   }
+  public set OnTestExecutableReload(handler: () => void) {
+    this.runners.map(runner => runner.OnFileChange = handler);
+  }
 
   constructor(runners: ExecutableRunner[], settingsProvider: SettingsProvider, vscodeAdapter: VscodeAdapter, resultParser: ResultParser) {
     this.settingsProvider = settingsProvider;

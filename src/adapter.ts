@@ -36,7 +36,6 @@ export class CppUTestAdapter implements TestAdapter {
 		this.log.info('Initializing adapter');
 
 		this.disposables.push(this.testsEmitter, this.testStatesEmitter, this.autorunEmitter);
-
 		const settingsProvider = new VscodeSettingsProvider(vscode.workspace.getConfiguration("cpputestExplorer"));
 		const processExecuter = new NodeProcessExecuter();
 		const vscodeAdapter = new VscodeAdapterImplementation();
@@ -46,6 +45,7 @@ export class CppUTestAdapter implements TestAdapter {
 		this.root = new CppUTestContainer(runners, settingsProvider, vscodeAdapter, resultParser);
 		this.root.OnTestFinish = this.handleTestFinished.bind(this);
 		this.root.OnTestStart = this.handleTestStarted.bind(this);
+		this.root.OnTestExecutableReload = this.handleTestReload.bind(this);
 
 		this.mainSuite = new CppUTestGroup("Main Suite");
 		// runners.forEach(runner => fs.watchFile(<fs.PathLike>runner, (cur: fs.Stats, prev: fs.Stats) => {
@@ -55,6 +55,9 @@ export class CppUTestAdapter implements TestAdapter {
 		// 		// this.autorunEmitter.fire();
 		// 	}
 		// }));
+	}
+	handleConfigChange(handleConfigChange: any) {
+		console.log(handleConfigChange);
 	}
 
 	public async load(): Promise<void> {
@@ -107,6 +110,10 @@ export class CppUTestAdapter implements TestAdapter {
 	private handleTestFinished(test: CppUTest, testResult: TestResult): void {
 		const event = this.mapTestResultToTestEvent(test, testResult);
 		this.testStatesEmitter.fire(event)
+	}
+
+	private handleTestReload(): void {
+		this.load();
 	}
 
 	private mapTestResultToTestEvent(test: CppUTest, testResult?: TestResult): TestEvent {

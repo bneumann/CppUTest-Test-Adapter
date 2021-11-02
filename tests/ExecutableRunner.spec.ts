@@ -114,7 +114,42 @@ describe("ExecutableRunner should", () => {
     runner.KillProcess();
     verify(mockedExecuter.KillProcess()).called();
   })
+
+  it("send an event when the runner changed", () => {
+    const testExecuter = new TestExecuter();
+    let runner = new ExecutableRunner(testExecuter, "exec");
+    let fileChanged: boolean = false;
+    runner.OnFileChange = () => fileChanged = true;
+
+    testExecuter.TriggerWatchFile();
+
+    expect(fileChanged).to.be.true;
+  });
 })
+
+class TestExecuter implements ProcessExecuter {
+  private fileChangeHandler: () => void;
+
+  constructor() {
+    this.fileChangeHandler = () => { };
+  }
+
+  RegisterWatchFile(cmd: string): void {
+
+  }
+
+  public set OnFileChange(handler: () => void) {
+    this.fileChangeHandler = handler;
+  }
+
+  TriggerWatchFile() {
+    this.fileChangeHandler();
+  }
+
+  Exec: Function = () => { };
+  ExecFile: Function = () => { };
+  KillProcess: Function = () => { };
+}
 
 function setupMockCalls(error: Error | undefined, returnValue: string, errorValue: string) {
   const mockedExecuter = mock<ProcessExecuter>();

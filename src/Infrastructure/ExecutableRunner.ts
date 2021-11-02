@@ -11,6 +11,7 @@ export default class ExecutableRunner {
   private readonly tempFile: string;
   public readonly Name: string;
   private dumpCached: boolean;
+  private processExecuter: ProcessExecuter;
 
   constructor(processExecuter: ProcessExecuter, command: string, workingDirectory: string = dirname(command)) {
     this.exec = processExecuter.Exec;
@@ -21,9 +22,15 @@ export default class ExecutableRunner {
     this.Name = basename(command);
     this.tempFile = `${this.Name}.dump`
     this.dumpCached = false;
+    this.processExecuter = processExecuter;
+    this.processExecuter.RegisterWatchFile(command);
   }
 
   public get Command(): string { return this.command; }
+
+  public set OnFileChange(handler: () => void) {
+    this.processExecuter.OnFileChange = handler;
+  }
 
   public GetTestList(): Promise<string> {
     return new Promise<string>((resolve, reject) => this.execFile(this.command, ["-ln"], { cwd: this.workingDirectory }, (error: any, stdout: any, stderr: any) => {
