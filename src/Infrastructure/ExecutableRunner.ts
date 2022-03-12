@@ -1,6 +1,7 @@
 import { ExecException } from "child_process";
 import { basename, dirname } from "path";
 import { ProcessExecuter } from "../Application/ProcessExecuter";
+import { VscodeLogger } from "../Application/VscodeLogger";
 
 export default class ExecutableRunner {
   private readonly exec: Function;
@@ -35,7 +36,7 @@ export default class ExecutableRunner {
   public GetTestList(): Promise<string> {
     return new Promise<string>((resolve, reject) => this.execFile(this.command, ["-ln"], { cwd: this.workingDirectory }, (error: any, stdout: any, stderr: any) => {
       if (error) {
-        console.error('stderr', error);
+        VscodeLogger.Instance.error(error);
         reject(error);
       }
       resolve(stdout);
@@ -51,7 +52,7 @@ export default class ExecutableRunner {
       return new Promise<string>((resolve, reject) => {
         this.exec(sourceGrep, { cwd: this.workingDirectory }, (error: ExecException | null, stdout: string, stderr: string) => {
           if (error) {
-            console.error('stderr', error);
+            VscodeLogger.Instance.error(error.message);
             reject(stderr);
           } else {
             resolve(stdout);
@@ -70,7 +71,7 @@ export default class ExecutableRunner {
     return new Promise<void>((resolve, reject) => {
       this.exec(sourceGrep, { cwd: this.workingDirectory }, (error: ExecException | null, stdout: string, stderr: string) => {
         if (error) {
-          console.error('stderr', error);
+          VscodeLogger.Instance.error(error.message);
           reject(stderr);
         } else {
           this.dumpCached = true;
@@ -84,7 +85,7 @@ export default class ExecutableRunner {
     return new Promise<string>((resolve, reject) => {
       this.execFile(this.command, ["-sg", group, "-sn", test, "-v"], { cwd: this.workingDirectory }, (error: ExecException | null, stdout: string, stderr: string) => {
         if (error && error.code === null) {
-          console.error('stderr', error);
+          VscodeLogger.Instance.error(error.message);
           reject(stderr);
         }
         resolve(stdout);

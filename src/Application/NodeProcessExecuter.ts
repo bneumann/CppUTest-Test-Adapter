@@ -18,7 +18,7 @@ export class NodeProcessExecuter implements ProcessExecuter {
         this.fileChangeHandler = () => { };
     }
 
-    RegisterWatchFile(cmd: string): void {
+    public RegisterWatchFile(cmd: string): void {
         watchFile(cmd, {}, () => this.fileChangeHandler());
     }
 

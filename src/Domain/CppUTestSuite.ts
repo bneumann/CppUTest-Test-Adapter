@@ -1,6 +1,6 @@
-import { TestSuiteInfo } from 'vscode-test-adapter-api';
 import { CppUTest } from './CppUTest';
 import { CppUTestGroup } from './CppUTestGroup';
+import { TestSuiteInfo } from './TestSuiteInfo';
 
 export default class CppUTestSuite {
   private readonly groupLabel: string;

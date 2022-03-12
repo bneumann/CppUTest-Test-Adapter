@@ -3,13 +3,13 @@ import { mock, instance, when, verify, anything, reset, anyString } from "ts-moc
 import ExecutableRunner from "../src/Infrastructure/ExecutableRunner";
 import CppUTestContainer from "../src/Domain/CppUTestContainer";
 import { CppUTestGroup } from "../src/Domain/CppUTestGroup";
-import { TestSuiteInfo } from "vscode-test-adapter-api";
 import { TestResult } from "../src/Domain/TestResult";
 import { SettingsProvider } from "../src/Infrastructure/SettingsProvider";
 import { VscodeAdapter } from "../src/Infrastructure/VscodeAdapter";
 import { DebugConfiguration, WorkspaceFolder } from "vscode";
 import { TestState } from "../src/Domain/TestState";
 import { ResultParser } from "../src/Domain/ResultParser";
+import { TestSuiteInfo } from "../src/Domain/TestSuiteInfo";
 
 describe("CppUTestContainer should", () => {
   let mockRunner: ExecutableRunner;
@@ -38,7 +38,7 @@ describe("CppUTestContainer should", () => {
     expect(allTests[0].label).to.be.eq("Exec1");
     expect(allTests[1].label).to.be.eq("Exec2");
     expect(allTests[0].children[0].label).to.be.eq("Group1");
-    expect(allTests[0].children[0].type).to.be.eq("suite");
+    expect(allTests[0].children[0]).to.be.instanceOf(CppUTestGroup)
     expect((allTests[0].children[0] as CppUTestGroup).children[0].label).to.be.eq("Test1");
 
     expect(allTests[1].label).to.be.eq("Exec2");

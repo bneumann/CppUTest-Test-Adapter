@@ -1,16 +1,12 @@
-import { TestInfo } from "vscode-test-adapter-api";
+import { TestInfo } from "./TestInfo";
 import uuid from "./uuid";
 
 export class CppUTest implements TestInfo {
-  type: "test" = "test";
   id: string;
   label: string;
   group: string;
-  description?: string | undefined;
-  tooltip?: string | undefined;
   file?: string | undefined;
   line?: number | undefined;
-  skipped?: boolean | undefined;
 
   constructor(testString: string, group: string, file?: string | undefined, line?: number | undefined) {
     this.id = uuid();

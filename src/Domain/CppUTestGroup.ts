@@ -1,5 +1,6 @@
-import { TestSuiteInfo, TestInfo } from 'vscode-test-adapter-api';
 import { CppUTest } from "./CppUTest";
+import { TestInfo } from "./TestInfo";
+import { TestSuiteInfo } from "./TestSuiteInfo";
 import uuid from './uuid';
 
 
@@ -7,10 +8,6 @@ export class CppUTestGroup implements TestSuiteInfo {
     type: "suite";
     id: string;
     label: string;
-    description?: string | undefined;
-    tooltip?: string | undefined;
-    file?: string | undefined;
-    line?: number | undefined;
     children: (TestSuiteInfo | TestInfo)[];
     executable: string | undefined;
 
