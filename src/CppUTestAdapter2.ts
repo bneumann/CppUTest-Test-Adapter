@@ -10,12 +10,16 @@ import { VscodeLogger } from "./Application/VscodeLogger";
 import { TestState } from './Domain/TestState';
 import { CppUTest } from './Domain/CppUTest';
 import { TestResult } from './Domain/TestResult';
+import uuid from './Domain/uuid';
 
 export class CppUTestAdapter2 {
     private controller: vscode.TestController;
     private log: VscodeLogger = VscodeLogger.Instance;
     private root: CppUTestContainer;
     private mainSuite: CppUTestGroup;
+    private lastTestResults: Record<string, TestResult> = {};
+    private allTestItems: vscode.TestItem[] = [];
+
     public get Controller(): vscode.TestController { return this.controller };
 
     public constructor() {
@@ -34,6 +38,7 @@ export class CppUTestAdapter2 {
         this.root = new CppUTestContainer(runners, settingsProvider, vscodeAdapter, resultParser);
         this.mainSuite = new CppUTestGroup("Main Suite");
         this.root.OnTestFinish = this.handleTestFinished.bind(this);
+        this.root.OnTestExecutableReload = this.handleExecutableReload.bind(this);
 
         this.controller.resolveHandler = this.discoverTests.bind(this);
         (this.controller as any).refreshHandler = this.discoverTests.bind(this);
@@ -100,25 +105,43 @@ export class CppUTestAdapter2 {
         }
         run.end();
     }
-    private debugHandler(request: vscode.TestRunRequest, token: vscode.CancellationToken) {
-        VscodeLogger.Instance.info(request as any);
+
+    private async debugHandler(request: vscode.TestRunRequest, token: vscode.CancellationToken) {
+        const run = this.controller.createTestRun(request);
+        const queue: vscode.TestItem[] = [];
+
+        if (request.include) {
+            request.include.forEach(test => queue.push(test));
+        } else {
+            this.controller.items.forEach(test => queue.push(test));
+        }
+
+        run.started(queue[0]);
+        await this.root.DebugTest(...queue.map(t => t.id));
+        run.end();
     }
 
-    private lastTestResults: Record<string, TestResult> = {};
+
     private handleTestFinished(test: CppUTest, result: TestResult): void {
         this.lastTestResults[test.id] = result;
     }
 
-    private allTestItems: vscode.TestItem[] = [];
+
+    private handleExecutableReload() {
+        VscodeLogger.Instance.info("Executables changed, reloading...");
+        this.discoverTests(undefined);
+    }
 
     private async discoverTests(test: vscode.TestItem | undefined) {
 
         // if (!test) {
         const loadedTests = await this.root.LoadTests();
         this.mainSuite.children = loadedTests;
+        // FIXME: Reinitialising the whole list is discouraged but the tests create new IDs on each discovery
+        // which prevents a good replace method
+        this.allTestItems.forEach(i => this.controller.items.delete(i.id));
         loadedTests.forEach(executable => {
             let executableGroup = this.controller.createTestItem(executable.id, executable.label);
-            this.controller.items.add(executableGroup);
             executable.TestGroups.forEach(testSuite => {
                 const testGroup = this.controller.createTestItem(testSuite.id, testSuite.label);
                 executableGroup.children.add(testGroup);
@@ -128,7 +151,10 @@ export class CppUTestAdapter2 {
                     testGroup.children.add(testItem);
                 })
             })
-            this.log.info("Tests initialized");
+            this.controller.items.add(executableGroup);
         });
+
+        this.log.info("Tests initialized");
+
     }
 }
