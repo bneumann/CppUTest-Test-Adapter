@@ -37,7 +37,7 @@ export default class CppUTestContainer {
     return Promise.all(this.runners
       .map(runner => runner.GetTestList()
         .then(testString => this.UpdateTestSuite(runner, testString))
-        .catch(error => new CppUTestGroup("ERROR ON LOADING TESTS"))
+        .catch(error => this.CreateTestSuiteError(runner.Name))
       ));
   }
 
@@ -155,6 +155,12 @@ export default class CppUTestContainer {
         console.error(error);
       }
     }
+    return testSuite;
+  }
+
+  private async CreateTestSuiteError(runnerName: string): Promise<CppUTestSuite> {
+    const testSuite = this.GetTestSuite(runnerName);
+    testSuite.AddTestGroup("ERROR LOADING TESTS");
     return testSuite;
   }
 
