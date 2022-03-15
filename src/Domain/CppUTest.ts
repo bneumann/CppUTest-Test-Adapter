@@ -20,6 +20,8 @@ export class CppUTest implements TestInfo {
   }
 
   public AddDebugInformation(testDebugString: string): void {
+    if(!testDebugString)
+      return
     const symbolInformationLines = testDebugString.split("\n");
     const filePath = symbolInformationLines.filter(si => si.startsWith("/"))[0];
     const debugSymbols: string[] = filePath.split(":");
