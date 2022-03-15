@@ -29,10 +29,12 @@ export default class VscodeSettingsProvider implements SettingsProvider {
 
   public get TestLocationFetchMode(): TestLocationFetchMode {
     switch(this.config.testLocationFetchMode) {
+      case 'test query':
+        return TestLocationFetchMode.TestQuery;
       case 'debug dump':
         return TestLocationFetchMode.DebugDump;
       case 'auto':
-        return (process.platform === "win32" ? TestLocationFetchMode.Disabled : TestLocationFetchMode.DebugDump);
+        return TestLocationFetchMode.Auto;
       case 'disabled':
       default:
         return TestLocationFetchMode.Disabled;
