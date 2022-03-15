@@ -50,7 +50,7 @@ describe("CppUTestContainer should", () => {
     const testList1 = await container.LoadTests();
     container.ClearTests()
     const testList2 = await container.LoadTests();
-    expect(JSON.stringify(testList1)).to.be.not.eq(JSON.stringify(testList2));
+    expect(JSON.stringify(testList1)).to.be.eq(JSON.stringify(testList2));
   })
 
   it("get the same id on consecutive loads", async () => {

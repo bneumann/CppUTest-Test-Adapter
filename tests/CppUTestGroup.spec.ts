@@ -5,12 +5,12 @@ import { CppUTestGroup } from "../src/Domain/CppUTestGroup";
 describe("CppUTestGroup should", () => {
   let testGroup: CppUTestGroup;
   beforeEach(() => {
-    testGroup = new CppUTestGroup("TestName");
+    testGroup = new CppUTestGroup("TestGroup", "TestGroupId");
   })
 
   it("be creatable with all information", () => {
-    expect(testGroup.label).to.be.equal("TestName");
-    expect(testGroup.id).to.contain("-");
+    expect(testGroup.label).to.be.equal("TestGroup");
+    expect(testGroup.id).to.be.equal("TestGroupId");
   })
   it("be able to add tests", () => {
     expect(testGroup.children.length).to.be.eq(0);
@@ -19,7 +19,7 @@ describe("CppUTestGroup should", () => {
   })
 
   it("find test by id", () => {
-    const test = new CppUTest("myTest", "myGroup");
+    const test = new CppUTest("myTest", "myGroup", "myId");
     const id = test.id;
     testGroup.children.push(test);
     testGroup.AddTest("randomTest1");
@@ -45,8 +45,8 @@ describe("CppUTestGroup should", () => {
   })
 
   it("find all tests in nested groups", () => {
-    const subTestGroup1 = new CppUTestGroup("subTestGroup1");
-    const subTestGroup2 = new CppUTestGroup("subTestGroup2");
+    const subTestGroup1 = new CppUTestGroup("subTestGroup1", "subTestGroupId1");
+    const subTestGroup2 = new CppUTestGroup("subTestGroup2", "subTestGroupId2");
     testGroup.children.push(subTestGroup1);
     testGroup.children.push(subTestGroup2);
     subTestGroup1.AddTest("test1");
