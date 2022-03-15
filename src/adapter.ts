@@ -47,7 +47,7 @@ export class CppUTestAdapter implements TestAdapter {
 		this.root.OnTestFinish = this.handleTestFinished.bind(this);
 		this.root.OnTestStart = this.handleTestStarted.bind(this);
 
-		this.mainSuite = new CppUTestGroup("Main Suite");
+		this.mainSuite = new CppUTestGroup("Main Suite", "");
 		// runners.forEach(runner => fs.watchFile(<fs.PathLike>runner, (cur: fs.Stats, prev: fs.Stats) => {
 		// 	if (cur.mtimeMs !== prev.mtimeMs) {
 		// 		this.log.info("Executable changed, updating test cases");
@@ -73,6 +73,7 @@ export class CppUTestAdapter implements TestAdapter {
 	public async run(tests: string[]): Promise<void> {
 		this.testStatesEmitter.fire(<TestRunStartedEvent>{ type: 'started', tests });
 		this.log.info('Running tests');
+		await this.updateTests();
 		if (tests.length == 1 && tests[0] == this.mainSuite.id) {
 			await this.root.RunAllTests();
 		} else {
@@ -83,6 +84,7 @@ export class CppUTestAdapter implements TestAdapter {
 	}
 
 	public async debug(tests: string[]): Promise<void> {
+		await this.updateTests();
 		return this.root.DebugTest(...tests);
 	}
 
@@ -97,6 +99,13 @@ export class CppUTestAdapter implements TestAdapter {
 			disposable.dispose();
 		}
 		this.disposables = [];
+	}
+
+	private async updateTests(): Promise<void> {
+		this.root.ClearTests();
+		const loadedTests = await this.root.LoadTests();
+		this.mainSuite.children = loadedTests;
+		this.testsEmitter.fire(<TestLoadFinishedEvent>{ type: 'finished', suite: this.mainSuite });
 	}
 
 	private handleTestStarted(test: CppUTest): void {

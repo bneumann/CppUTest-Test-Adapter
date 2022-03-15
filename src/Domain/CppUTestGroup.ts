@@ -1,7 +1,5 @@
-import { TestSuiteInfo, TestInfo } from 'vscode-test-adapter-api';
+import { TestSuiteInfo } from 'vscode-test-adapter-api';
 import { CppUTest } from "./CppUTest";
-import uuid from './uuid';
-
 
 export class CppUTestGroup implements TestSuiteInfo {
     type: "suite";
@@ -11,20 +9,24 @@ export class CppUTestGroup implements TestSuiteInfo {
     tooltip?: string | undefined;
     file?: string | undefined;
     line?: number | undefined;
-    children: (TestSuiteInfo | TestInfo)[];
-    executable: string | undefined;
+    children: (CppUTest | CppUTestGroup)[];
 
-    constructor(inputString: string, executable: string | undefined = undefined) {
+    constructor(label: string, id: string) {
         this.type = "suite";
-        this.id = uuid();
-        this.label = inputString;
+        this.id = id;
+        this.label = label;
         this.children = new Array<CppUTest | CppUTestGroup>();
-        this.executable = executable;
     }
 
     AddTest(testName: string, file?: string, line?: number) {
-        const test: CppUTest = new CppUTest(testName, this.label, file, line);
+        const test: CppUTest = new CppUTest(testName, this.label, this.id + "/" + testName, file, line);
         this.children.unshift(test);
+    }
+
+    AddTestGroup(groupName: string): CppUTestGroup {
+        const testGroup = new CppUTestGroup(groupName, this.id + "/" + groupName);
+        this.children.push(testGroup);
+        return testGroup;
     }
 
     FindTest(id: string): CppUTest[] {

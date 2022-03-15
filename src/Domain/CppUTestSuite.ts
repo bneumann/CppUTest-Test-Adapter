@@ -1,44 +1,24 @@
-import { TestSuiteInfo } from 'vscode-test-adapter-api';
-import { CppUTest } from './CppUTest';
 import { CppUTestGroup } from './CppUTestGroup';
 
-export default class CppUTestSuite {
-  private readonly groupLabel: string;
+export default class CppUTestSuite extends CppUTestGroup {
 
-  constructor(groupLabel: string) {
-    this.groupLabel = groupLabel;
+  constructor(label: string) {
+    super(label, label);
   }
 
-  public CreateTestGroupsFromTestListString(testListString: string) {
-    const groupStrings: string[] = testListString.split(" ");
-    const subSuite: CppUTestGroup = new CppUTestGroup(this.groupLabel);
-    groupStrings
+  public UpdateFromTestListString(testListString: string): void {
+    const groupAndGroupStrings: string[] = testListString.split(" ");
+    this.children.splice(0, this.children.length);
+    groupAndGroupStrings
       .map(gs => gs.split("."))
-      .forEach(split => this.CreateGroupAndTests(subSuite, split[0], split[1]));
-
-    return subSuite;
+      .map(split => this.UpdateGroupAndTest(split[0], split[1]));
   }
 
-  private CreateGroupAndTests(suite: CppUTestGroup, groupName: string, testName: string): CppUTestGroup {
-    let testGroup = suite.children.find(c => c.label === groupName);
+  private UpdateGroupAndTest(groupName: string, testName: string): void {
+    let testGroup = this.children.find(c => c.label === groupName) as CppUTestGroup;
     if (!testGroup) {
-      testGroup = new CppUTestGroup(groupName);
-      suite.children.push(testGroup);
+      testGroup = this.AddTestGroup(groupName);
     }
-    const test = new CppUTest(testName, groupName);
-    (testGroup as TestSuiteInfo).children.unshift(test);
-    return (testGroup as CppUTestGroup);
-  }
-
-  public AddDebugInformationToTest(test: CppUTest, testDebugString: string): void {
-    const symbolInformationLines = testDebugString.split("\n");
-    const filePath = symbolInformationLines.filter(si => si.startsWith("/"))[0];
-    const debugSymbols: string[] = filePath.split(":");
-    const file = debugSymbols[0];
-    const line = parseInt(debugSymbols[1], 10);
-    test.file = file;
-    test.line = line;
+    testGroup.AddTest(testName);
   }
 }
-
-

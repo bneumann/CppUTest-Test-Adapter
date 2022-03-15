@@ -1,5 +1,4 @@
 import { TestInfo } from "vscode-test-adapter-api";
-import uuid from "./uuid";
 
 export class CppUTest implements TestInfo {
   type: "test" = "test";
@@ -12,11 +11,21 @@ export class CppUTest implements TestInfo {
   line?: number | undefined;
   skipped?: boolean | undefined;
 
-  constructor(testString: string, group: string, file?: string | undefined, line?: number | undefined) {
-    this.id = uuid();
+  constructor(testString: string, group: string, id: string, file?: string | undefined, line?: number | undefined) {
+    this.id = id;
     this.file = file;
     this.line = line;
     this.label = testString;
     this.group = group;
+  }
+
+  public AddDebugInformation(testDebugString: string): void {
+    const symbolInformationLines = testDebugString.split("\n");
+    const filePath = symbolInformationLines.filter(si => si.startsWith("/"))[0];
+    const debugSymbols: string[] = filePath.split(":");
+    const file = debugSymbols[0];
+    const line = parseInt(debugSymbols[1], 10);
+    this.file = file;
+    this.line = line;
   }
 }
