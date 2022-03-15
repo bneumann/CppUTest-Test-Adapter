@@ -12,6 +12,8 @@ import VscodeSettingsProvider from "./Infrastructure/VscodeSettingsProvider";
 import ExecutableRunner from "./Infrastructure/ExecutableRunner";
 import { NodeProcessExecuter } from './Application/NodeProcessExecuter';
 import { VscodeAdapterImplementation } from "./Application/VscodeAdapterImplementation";
+import { SettingsProvider } from "./Infrastructure/SettingsProvider";
+import { ProcessExecuter } from "./Application/ProcessExecuter";
 
 export class CppUTestAdapter implements TestAdapter {
 
@@ -22,7 +24,8 @@ export class CppUTestAdapter implements TestAdapter {
 	private readonly autorunEmitter = new vscode.EventEmitter<RetireEvent>();
 	private readonly mainSuite: CppUTestGroup;
 	private readonly root: CppUTestContainer;
-
+	private readonly settingsProvider: SettingsProvider;
+	private readonly processExecuter: ProcessExecuter;
 
 	get tests(): vscode.Event<TestLoadStartedEvent | TestLoadFinishedEvent> { return this.testsEmitter.event; }
 	get testStates(): vscode.Event<TestRunStartedEvent | TestRunFinishedEvent | TestSuiteEvent | TestEvent> { return this.testStatesEmitter.event; }
@@ -37,13 +40,12 @@ export class CppUTestAdapter implements TestAdapter {
 
 		this.disposables.push(this.testsEmitter, this.testStatesEmitter, this.autorunEmitter);
 
-		const settingsProvider = new VscodeSettingsProvider(vscode.workspace.getConfiguration("cpputestTestAdapter"));
-		const processExecuter = new NodeProcessExecuter();
+		this.settingsProvider = new VscodeSettingsProvider();
+		this.processExecuter = new NodeProcessExecuter();
 		const vscodeAdapter = new VscodeAdapterImplementation();
-		const runners = settingsProvider.GetTestRunners().map(runner => new ExecutableRunner(processExecuter, runner));
 		const resultParser = new RegexResultParser();
 
-		this.root = new CppUTestContainer(runners, settingsProvider, vscodeAdapter, resultParser);
+		this.root = new CppUTestContainer(this.settingsProvider, vscodeAdapter, resultParser);
 		this.root.OnTestFinish = this.handleTestFinished.bind(this);
 		this.root.OnTestStart = this.handleTestStarted.bind(this);
 
@@ -61,13 +63,9 @@ export class CppUTestAdapter implements TestAdapter {
 		this.testsEmitter.fire(<TestLoadStartedEvent>{ type: 'started' });
 		this.log.info('Loading tests');
 
-		this.root.ClearTests();
-		const loadedTests = await this.root.LoadTests();
+		await this.updateTests();
 
 		this.log.info('Tests loaded');
-
-		this.mainSuite.children = loadedTests;
-		this.testsEmitter.fire(<TestLoadFinishedEvent>{ type: 'finished', suite: this.mainSuite });
 	}
 
 	public async run(tests: string[]): Promise<void> {
@@ -103,7 +101,8 @@ export class CppUTestAdapter implements TestAdapter {
 
 	private async updateTests(): Promise<void> {
 		this.root.ClearTests();
-		const loadedTests = await this.root.LoadTests();
+		const runners = this.settingsProvider.GetTestRunners().map(runner => new ExecutableRunner(this.processExecuter, runner));
+		const loadedTests = await this.root.LoadTests(runners);
 		this.mainSuite.children = loadedTests;
 		this.testsEmitter.fire(<TestLoadFinishedEvent>{ type: 'finished', suite: this.mainSuite });
 	}
