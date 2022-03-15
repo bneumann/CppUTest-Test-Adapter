@@ -68,27 +68,27 @@
   "contributes": {
     "configuration": {
       "type": "object",
-      "title": "CppUTest Explorer configuration",
+      "title": "CppUTest Test Adapter",
       "properties": {
-        "cpputestExplorer.testExecutable": {
-          "description": "executable that contains all tests. Can be multiple executables separated by semicolon. Wildcard is supported (e.g. myExecutable;bin/test/ut_*)",
+        "cpputestTestAdapter.testExecutable": {
+          "description": "Executable that contains all tests. Can be multiple executables separated by semicolon. Wildcard is supported (e.g. myExecutable;bin/test/ut_*)",
           "default": "",
           "type": "string",
           "scope": "resource"
         },
-        "cpputestExplorer.testExecutablePath": {
-          "description": "path where the executable should be run in",
+        "cpputestTestAdapter.testExecutablePath": {
+          "description": "Path where the executable should be run in",
           "default": "",
           "type": "string",
           "scope": "resource"
         },
-        "cpputestExplorer.logpanel": {
-          "description": "write diagnotic logs to an output panel",
+        "cpputestTestAdapter.logpanel": {
+          "description": "Write diagnostic logs to an output panel",
           "type": "boolean",
           "scope": "resource"
         },
-        "cpputestExplorer.logfile": {
-          "description": "write diagnostic logs to the given file",
+        "cpputestTestAdapter.logfile": {
+          "description": "Write diagnostic logs to the given file",
           "type": "string",
           "scope": "resource"
         }

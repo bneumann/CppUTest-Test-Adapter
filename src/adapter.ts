@@ -37,7 +37,7 @@ export class CppUTestAdapter implements TestAdapter {
 
 		this.disposables.push(this.testsEmitter, this.testStatesEmitter, this.autorunEmitter);
 
-		const settingsProvider = new VscodeSettingsProvider(vscode.workspace.getConfiguration("cpputestExplorer"));
+		const settingsProvider = new VscodeSettingsProvider(vscode.workspace.getConfiguration("cpputestTestAdapter"));
 		const processExecuter = new NodeProcessExecuter();
 		const vscodeAdapter = new VscodeAdapterImplementation();
 		const runners = settingsProvider.GetTestRunners().map(runner => new ExecutableRunner(processExecuter, runner));
