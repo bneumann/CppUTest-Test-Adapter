@@ -25,15 +25,16 @@ export default class CppUTestContainer {
     this.onTestStartHandler = handler;
   }
 
-  constructor(runners: ExecutableRunner[], settingsProvider: SettingsProvider, vscodeAdapter: VscodeAdapter, resultParser: ResultParser) {
+  constructor(settingsProvider: SettingsProvider, vscodeAdapter: VscodeAdapter, resultParser: ResultParser) {
     this.settingsProvider = settingsProvider;
-    this.runners = runners;
+    this.runners = [];
     this.vscodeAdapter = vscodeAdapter;
     this.resultParser = resultParser;
     this.suites = new Map<string, CppUTestSuite>();
   }
 
-  public LoadTests(): Promise<CppUTestSuite[]> {
+  public LoadTests(runners: ExecutableRunner[]): Promise<CppUTestSuite[]> {
+    this.runners = runners;
     return Promise.all(this.runners
       .map(runner => runner.GetTestList()
         .then(testString => this.UpdateTestSuite(runner, testString))

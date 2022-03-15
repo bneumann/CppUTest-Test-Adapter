@@ -31,9 +31,9 @@ describe("CppUTestContainer should", () => {
     const mockRunner1 = createMockRunner("Exec1", "Group1.Test1 Group2.Test2");
     const mockRunner2 = createMockRunner("Exec2", "Group4.Test1 Group5.Test2 Group5.Test42");
 
-    const container = new CppUTestContainer([instance(mockRunner1), instance(mockRunner2)], instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
+    const container = new CppUTestContainer(instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
 
-    const allTests = await container.LoadTests();
+    const allTests = await container.LoadTests([instance(mockRunner1), instance(mockRunner2)]);
     expect(allTests).to.be.lengthOf(2);
     expect(allTests[0].label).to.be.eq("Exec1");
     expect(allTests[1].label).to.be.eq("Exec2");
@@ -46,26 +46,26 @@ describe("CppUTestContainer should", () => {
   })
 
   it("reload all tests after clear", async () => {
-    const container = new CppUTestContainer([instance(mockRunner)], instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
-    const testList1 = await container.LoadTests();
+    const container = new CppUTestContainer(instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
+    const testList1 = await container.LoadTests([instance(mockRunner)]);
     container.ClearTests()
-    const testList2 = await container.LoadTests();
+    const testList2 = await container.LoadTests([instance(mockRunner)]);
     expect(JSON.stringify(testList1)).to.be.eq(JSON.stringify(testList2));
   })
 
   it("get the same id on consecutive loads", async () => {
-    const container = new CppUTestContainer([instance(mockRunner)], instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
-    const testList1 = await container.LoadTests();
-    const testList2 = await container.LoadTests();
+    const container = new CppUTestContainer(instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
+    const testList1 = await container.LoadTests([instance(mockRunner)]);
+    const testList2 = await container.LoadTests([instance(mockRunner)]);
     expect(JSON.stringify(testList1)).to.be.eq(JSON.stringify(testList2));
   })
 
   it("run all tests", async () => {
     const mockRunner = createMockRunner("Exec1", "Group1.Test1 Group2.Test2");
 
-    const container = new CppUTestContainer([instance(mockRunner)], instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
+    const container = new CppUTestContainer(instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
 
-    await container.LoadTests();
+    await container.LoadTests([instance(mockRunner)]);
     await container.RunAllTests();
     verify(mockRunner.RunTest("Group1", "Test1")).called();
     verify(mockRunner.RunTest("Group2", "Test2")).called();
@@ -74,9 +74,9 @@ describe("CppUTestContainer should", () => {
   it("run test by id", async () => {
     const mockRunner = createMockRunner("Exec1", "Group1.Test1 Group2.Test2");
 
-    const container = new CppUTestContainer([instance(mockRunner)], instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
+    const container = new CppUTestContainer(instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
 
-    const allTests = await container.LoadTests();
+    const allTests = await container.LoadTests([instance(mockRunner)]);
     const testToRun = (allTests[0].children[0] as TestSuiteInfo).children[0];
     await container.RunTest(testToRun.id);
     verify(mockRunner.RunTest("Group1", "Test1")).called();
@@ -84,9 +84,9 @@ describe("CppUTestContainer should", () => {
   })
 
   it("run tests by ids", async () => {
-    const container = new CppUTestContainer([instance(mockRunner)], instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
+    const container = new CppUTestContainer(instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
 
-    const allTests = await container.LoadTests();
+    const allTests = await container.LoadTests([instance(mockRunner)]);
     const testsToRun = [
       (allTests[0].children[0] as TestSuiteInfo).children[0],
       (allTests[0].children[1] as TestSuiteInfo).children[0]
@@ -100,9 +100,9 @@ describe("CppUTestContainer should", () => {
     const mockRunner1 = createMockRunner("Exec1", "Group1.Test1 Group2.Test2");
     const mockRunner2 = createMockRunner("Exec2", "Group3.Test1 Group4.Test2");
 
-    const container = new CppUTestContainer([instance(mockRunner1), instance(mockRunner2)], instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
+    const container = new CppUTestContainer(instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
 
-    const allTests = await container.LoadTests();
+    const allTests = await container.LoadTests([instance(mockRunner1), instance(mockRunner2)]);
     expect(allTests).to.have.lengthOf(2);
     const testsToRun = allTests[0];
     await container.RunTest(testsToRun.id);
@@ -114,9 +114,9 @@ describe("CppUTestContainer should", () => {
   it("run tests by group ids", async () => {
     const mockRunner = createMockRunner("Exec1", "Group1.Test1 Group1.Test2 Group2.Test2 Group2.Test5");
 
-    const container = new CppUTestContainer([instance(mockRunner)], instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
+    const container = new CppUTestContainer(instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
 
-    const allTests = await container.LoadTests();
+    const allTests = await container.LoadTests([instance(mockRunner)]);
     expect(allTests).to.have.lengthOf(1);
     expect(allTests[0].children).to.have.lengthOf(2);
     const testsToRunId = allTests[0].children[0].id;
@@ -132,9 +132,9 @@ describe("CppUTestContainer should", () => {
     const mockRunner = createMockRunner("Exec1", "Group1.Test1 Group1.Test2");
     when(mockRunner.RunTest(anyString(), anyString())).thenResolve("Success");
 
-    const container = new CppUTestContainer([instance(mockRunner)], instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
+    const container = new CppUTestContainer(instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
 
-    const allTests = await container.LoadTests();
+    const allTests = await container.LoadTests([instance(mockRunner)]);
     const testToRun = (allTests[0].children[0] as TestSuiteInfo).children[0];
     return expect(container.RunTest(testToRun.id)).to.be
       .eventually.fulfilled
@@ -150,9 +150,9 @@ describe("CppUTestContainer should", () => {
     reset(mockResultParser);
     when(mockResultParser.GetResult("Success")).thenReturn(new TestResult(TestState.Passed, ""));
     when(mockResultParser.GetResult("Failed")).thenReturn(new TestResult(TestState.Failed, "Failed"));
-    const container = new CppUTestContainer([instance(mockRunner)], instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
+    const container = new CppUTestContainer(instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
 
-    const allTests = await container.LoadTests();
+    const allTests = await container.LoadTests([instance(mockRunner)]);
     const testToRun = (allTests[0].children[0] as TestSuiteInfo);
     return expect(container.RunTest(testToRun.id)).to.be
       .eventually.fulfilled
@@ -172,9 +172,9 @@ describe("CppUTestContainer should", () => {
     when(mockSetting.GetWorkspaceFolders()).thenReturn([instance(mockFolder)]);
     when(mockSetting.GetDebugConfiguration()).thenReturn(debugConfigSpy);
     when(mockRunner.Command).thenReturn("myProgram");
-    const container = new CppUTestContainer([instance(mockRunner)], instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
+    const container = new CppUTestContainer(instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
 
-    const allTests = await container.LoadTests();
+    const allTests = await container.LoadTests([instance(mockRunner)]);
     expect(allTests).to.have.lengthOf(1);
     const testsToRunId = (allTests[0].children[0] as CppUTestGroup).children[0].id;
 
@@ -195,9 +195,9 @@ describe("CppUTestContainer should", () => {
     when(mockSetting.GetWorkspaceFolders()).thenReturn([instance(mockFolder)]);
     when(mockSetting.GetDebugConfiguration()).thenReturn(debugConfigSpy);
     when(mockRunner.Command).thenReturn("myProgram");
-    const container = new CppUTestContainer([instance(mockRunner)], instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
+    const container = new CppUTestContainer(instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
 
-    const allTests = await container.LoadTests();
+    const allTests = await container.LoadTests([instance(mockRunner)]);
     expect(allTests).to.have.lengthOf(1);
     const testsToRunId = allTests[0].children[0].id;
 
@@ -211,9 +211,9 @@ describe("CppUTestContainer should", () => {
   it("thrown an error if the debugger is started without config", async () => {
     mockSetting = mock<SettingsProvider>();
     when(mockSetting.GetDebugConfiguration()).thenReturn("");
-    const container = new CppUTestContainer([instance(mockRunner)], instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
+    const container = new CppUTestContainer(instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
 
-    const allTests = await container.LoadTests();
+    const allTests = await container.LoadTests([instance(mockRunner)]);
     const testsToRunId = allTests[0].id;
 
     return expect(container.DebugTest(testsToRunId)).to.be.
@@ -221,9 +221,9 @@ describe("CppUTestContainer should", () => {
   })
 
   it("thrown an error if the debugger is started without workspaceFolders", async () => {
-    const container = new CppUTestContainer([instance(mockRunner)], instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
+    const container = new CppUTestContainer(instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
 
-    const allTests = await container.LoadTests();
+    const allTests = await container.LoadTests([instance(mockRunner)]);
     const testsToRunId = allTests[0].id;
 
     return expect(container.DebugTest(testsToRunId)).to.be.
@@ -231,8 +231,8 @@ describe("CppUTestContainer should", () => {
   })
 
   it("notify the caller on test start and finish", async () => {
-    const container = new CppUTestContainer([instance(mockRunner)], instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
-    const allTests = await container.LoadTests();
+    const container = new CppUTestContainer(instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
+    const allTests = await container.LoadTests([instance(mockRunner)]);
 
     const testToRun = (allTests[0].children[0] as TestSuiteInfo).children[0];
     let testOnStart = undefined;
@@ -248,7 +248,9 @@ describe("CppUTestContainer should", () => {
 
   it("kill the process currently running", async () => {
     const mockRunner = createMockRunner("Exec1", "Group1.Test1 Group2.Test2");
-    const container = new CppUTestContainer([instance(mockRunner)], instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
+    const container = new CppUTestContainer(instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
+    
+    await container.LoadTests([instance(mockRunner)]);
 
     container.KillRunningProcesses();
     verify(mockRunner.KillProcess()).called();

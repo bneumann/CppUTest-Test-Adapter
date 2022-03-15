@@ -3,12 +3,16 @@ import { glob } from 'glob';
 import { SettingsProvider } from './SettingsProvider';
 
 export default class VscodeSettingsProvider implements SettingsProvider {
-  private readonly Executables: string;
-  private readonly ExecutablePath: string;
+  private config: vscode.WorkspaceConfiguration;
 
-  constructor(config: vscode.WorkspaceConfiguration) {
-    this.Executables = config.testExecutable;
-    this.ExecutablePath = config.testExecutablePath;
+  constructor() {
+    const configSection = "cpputestTestAdapter";
+    this.config = vscode.workspace.getConfiguration(configSection);
+    vscode.workspace.onDidChangeConfiguration(event => {
+      if (event.affectsConfiguration(configSection)) {
+        this.config = vscode.workspace.getConfiguration(configSection);
+      }
+    })
   }
 
   GetWorkspaceFolders(): readonly vscode.WorkspaceFolder[] | undefined {
@@ -16,11 +20,11 @@ export default class VscodeSettingsProvider implements SettingsProvider {
   }
 
   public GetTestRunners(): string[] {
-    return this.SplitRunners(this.Executables);
+    return this.SplitRunners(this.config.testExecutable);
   }
 
   public GetTestPath(): string {
-    return this.ResolveSettingsVariable(this.ExecutablePath);
+    return this.ResolveSettingsVariable(this.config.testExecutablePath);
   }
 
 

@@ -8,8 +8,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	const workspaceFolder = (vscode.workspace.workspaceFolders || [])[0];
 
 	// create a simple logger that can be configured with the configuration variables
-	// `cpputestExplorer.logpanel"` and `cpputestExplorer.logfile`
-	const log = new Log('cpputestExplorer', workspaceFolder, 'CppUTest Explorer Log');
+	// `cpputestTestAdapter.logToOutputPanel"` and `cpputestTestAdapter.logToFile`
+	const log = new Log('cpputestTestAdapter', workspaceFolder, 'CppUTest Test Adapter Log');
 	context.subscriptions.push(log);
 
 	// get the Test Explorer extension
