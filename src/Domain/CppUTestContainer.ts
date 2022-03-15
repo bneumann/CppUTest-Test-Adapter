@@ -6,7 +6,7 @@ import { CppUTest } from "./CppUTest";
 import { TestState } from "./TestState";
 import { ResultParser } from "./ResultParser";
 import ExecutableRunner from "../Infrastructure/ExecutableRunner";
-import { SettingsProvider } from "../Infrastructure/SettingsProvider";
+import { SettingsProvider, TestLocationFetchMode } from "../Infrastructure/SettingsProvider";
 import { VscodeAdapter } from "../Infrastructure/VscodeAdapter";
 
 export default class CppUTestContainer {
@@ -148,12 +148,14 @@ export default class CppUTestContainer {
   private async UpdateTestSuite(runner: ExecutableRunner, testString: string): Promise<CppUTestSuite> {
     const testSuite = this.GetTestSuite(runner.Name);
     testSuite.UpdateFromTestListString(testString);
-    for(const test of testSuite.Tests) {
-      try {
-        const debugString = await runner.GetDebugSymbols(test.group, test.label);
-        test.AddDebugInformation(debugString);
-      } catch (error) {
-        console.error(error);
+    if(this.settingsProvider.TestLocationFetchMode == TestLocationFetchMode.DebugDump) {
+      for(const test of testSuite.Tests) {
+        try {
+          const debugString = await runner.GetDebugSymbols(test.group, test.label);
+          test.AddDebugInformation(debugString);
+        } catch (error) {
+          console.error(error);
+        }
       }
     }
     return testSuite;
