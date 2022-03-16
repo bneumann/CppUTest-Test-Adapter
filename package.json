@@ -82,6 +82,18 @@
           "type": "string",
           "scope": "resource"
         },
+        "cpputestTestAdapter.testLocationFetchMode": {
+          "description": "",
+          "default": "auto",
+          "type": "string",
+          "enum": ["auto", "debug dump", "disabled"],
+          "enumDescriptions": [
+            "Selects the best fetch mode for the current architecture",
+            "Gets test location information from debug symbols in test executables",
+            "Test location fetch disabled"
+          ],
+          "scope": "resource"
+        },
         "cpputestTestAdapter.logpanel": {
           "description": "Write diagnostic logs to an output panel",
           "type": "boolean",
