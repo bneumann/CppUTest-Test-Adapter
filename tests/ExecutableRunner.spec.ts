@@ -3,17 +3,20 @@ import * as chaiAsPromised from "chai-as-promised";
 import ExecutableRunner from '../src/Infrastructure/ExecutableRunner';
 import { ProcessExecuter } from '../src/Application/ProcessExecuter';
 import { anything, instance, mock, verify, when } from "ts-mockito";
+import { TestLocationFetchMode } from '../src/Infrastructure/SettingsProvider';
 
 chaiUse(chaiAsPromised);
 
 const outputStrings = [
   {
     name: "short",
-    value: "Group1.Test1 Group2.Test2"
+    value: "Group1.Test1.File.Name1.cpp.789\nGroup2.File_name_2.874",
+    hasLocation: true
   },
   {
     name: "long",
-    value: "Group1.Test1 Group2.Test2 Group2.Test3 Group2.Test4"
+    value: "Group1.Test1 Group2.Test2 Group2.Test3 Group2.Test4",
+    hasLocation: false
   }
 ]
 
@@ -45,9 +48,10 @@ describe("ExecutableRunner should", () => {
 
       let runner = new ExecutableRunner(processExecuter, command);
 
-      let testListString = await runner.GetTestList();
+      let testList = await runner.GetTestList(testOutput.hasLocation ? TestLocationFetchMode.TestQuery : TestLocationFetchMode.Disabled);
 
-      expect(testListString).to.be.eq(testOutput.value);
+      expect(testList[0]).to.be.eq(testOutput.value);
+      expect(testList[1]).to.be.eq(testOutput.hasLocation);
     })
   })
 
@@ -56,7 +60,7 @@ describe("ExecutableRunner should", () => {
     const command = "runnable";
 
     let runner = new ExecutableRunner(processExecuter, command);
-    return expect(runner.GetTestList()).to.be.eventually.
+    return expect(runner.GetTestList(TestLocationFetchMode.Auto)).to.be.eventually.
       be.rejectedWith("whoops")
       .and.be.an.instanceOf(Error)
   })
@@ -90,7 +94,7 @@ describe("ExecutableRunner should", () => {
     });
 
     let runner = new ExecutableRunner(instance(processExecuter), command, "/tmp/myPath");
-    await runner.GetTestList();
+    await runner.GetTestList(TestLocationFetchMode.Auto);
     expect(calledOptions.cwd).to.be.eq("/tmp/myPath");
   })
 
