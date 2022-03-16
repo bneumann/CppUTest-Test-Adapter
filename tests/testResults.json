@@ -10,8 +10,9 @@
                         "- 0 ms"
                 ],
                 "expected": [
-                        "Message: This is failing",
-                        "CHECK(false) failed"
+                        "C:\\Users\\tests\\basicTests.cpp(58): error: Failure in TEST(ClassName, Create)",
+                        "        Message: This is failing",
+                        "        CHECK(false) failed"
                 ]
         },
         {
@@ -25,6 +26,7 @@
                         "- 0 ms"
                 ],
                 "expected": [
+                        "/tests/basicTests.cpp(43): error: Failure in TEST(SecondClass, ShouldFail)",
                         "Message: This is also failing",
                         "CHECK(false) failed"
                 ]
@@ -46,6 +48,7 @@
                         "Errors (1 failures, 1283 tests, 1 ran, 79 checks, 0 ignored, 1282 filtered out, 25 ms)"
                 ],
                 "expected":[
+                        "src/tests/omss_unit_tests/src/ut/ut_real/inventory_manager/TEST_GROUP1.cpp:51: error: Failure in TEST(TEST_GROUP1, TEST1)",
                         "expected <0>",
                         "but was <-2>",
                         "difference starts at position 0 at: < -2 >",

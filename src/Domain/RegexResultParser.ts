@@ -21,11 +21,12 @@ export class RegexResultParser implements ResultParser {
       }
       if (line.includes("Failure in")) {
         state = TestState.Failed;
+        message = message.concat(line, "\n");
         continue;
       }
       if (state === TestState.Failed) {
         if (line.trimRight() !== "") {
-          message = message.concat(line.trim(), "\n");
+          message = message.concat(line, "\n");
         } else {
           return new TestResult(state, message.trim());
         }
