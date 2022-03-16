@@ -36,8 +36,8 @@ export default class CppUTestContainer {
   public LoadTests(runners: ExecutableRunner[]): Promise<CppUTestSuite[]> {
     this.runners = runners;
     return Promise.all(this.runners
-      .map(runner => runner.GetTestList()
-        .then(testString => this.UpdateTestSuite(runner, testString))
+      .map(runner => runner.GetTestList(this.settingsProvider.TestLocationFetchMode)
+        .then(testList => this.UpdateTestSuite(runner, testList[0], testList[1]))
         .catch(error => this.CreateTestSuiteError(runner.Name))
       ));
   }
@@ -145,10 +145,11 @@ export default class CppUTestContainer {
     return Array<CppUTest>().concat(...tests);
   }
 
-  private async UpdateTestSuite(runner: ExecutableRunner, testString: string): Promise<CppUTestSuite> {
+  private async UpdateTestSuite(runner: ExecutableRunner, testString: string, hasLocation: boolean): Promise<CppUTestSuite> {
     const testSuite = this.GetTestSuite(runner.Name);
-    testSuite.UpdateFromTestListString(testString);
-    if(this.settingsProvider.TestLocationFetchMode == TestLocationFetchMode.DebugDump) {
+    testSuite.UpdateFromTestListString(testString, hasLocation);
+    if((this.settingsProvider.TestLocationFetchMode == TestLocationFetchMode.DebugDump) ||
+       ((this.settingsProvider.TestLocationFetchMode == TestLocationFetchMode.Auto) && !hasLocation && (process.platform != "win32"))) {
       for(const test of testSuite.Tests) {
         try {
           const debugString = await runner.GetDebugSymbols(test.group, test.label);

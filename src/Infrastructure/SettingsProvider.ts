@@ -1,6 +1,8 @@
 import { DebugConfiguration, WorkspaceFolder } from 'vscode';
 
 export enum TestLocationFetchMode {
+  Auto,
+  TestQuery,
   DebugDump,
   Disabled
 }

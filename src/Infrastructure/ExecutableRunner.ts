@@ -1,6 +1,7 @@
 import { ExecException } from "child_process";
 import { basename, dirname } from "path";
 import { ProcessExecuter } from "../Application/ProcessExecuter";
+import { TestLocationFetchMode } from "./SettingsProvider";
 
 export default class ExecutableRunner {
   private readonly exec: Function;
@@ -11,6 +12,7 @@ export default class ExecutableRunner {
   private readonly tempFile: string;
   public readonly Name: string;
   private dumpCached: boolean;
+  private tryGetLocation: boolean;
 
   constructor(processExecuter: ProcessExecuter, command: string, workingDirectory: string = dirname(command)) {
     this.exec = processExecuter.Exec;
@@ -21,17 +23,48 @@ export default class ExecutableRunner {
     this.Name = basename(command);
     this.tempFile = `${this.Name}.dump`
     this.dumpCached = false;
+    this.tryGetLocation = true;
   }
 
   public get Command(): string { return this.command; }
 
-  public GetTestList(): Promise<string> {
-    return new Promise<string>((resolve, reject) => this.execFile(this.command, ["-ln"], { cwd: this.workingDirectory }, (error: any, stdout: any, stderr: any) => {
+  public GetTestList(testLocationFetchMode: TestLocationFetchMode): Promise<[string, boolean]> {
+    switch (testLocationFetchMode) {
+      case TestLocationFetchMode.TestQuery:
+        return this.GetTestListWithLocation(true);
+      case TestLocationFetchMode.Auto:
+        if (this.tryGetLocation) {
+          return this.GetTestListWithLocation(false).catch( () => {
+            this.tryGetLocation = false;
+            return this.GetTestListGroupAndNames();
+          });
+        } else {
+          return this.GetTestListGroupAndNames();
+        }
+      default:
+        return this.GetTestListGroupAndNames();
+    }
+  }
+
+  private GetTestListWithLocation(printError: boolean): Promise<[string, boolean]> {
+    return new Promise<[string, boolean]>((resolve, reject) => this.execFile(this.command, ["-ll"], { cwd: this.workingDirectory }, (error: any, stdout: any, stderr: any) => {
+      if (error) {
+        if (printError) {
+          console.error('stderr', error);
+        }
+        reject(error);
+      }
+      resolve([stdout, true]);
+    }));
+  }
+
+  private GetTestListGroupAndNames(): Promise<[string, boolean]> {
+    return new Promise<[string, boolean]>((resolve, reject) => this.execFile(this.command, ["-ln"], { cwd: this.workingDirectory }, (error: any, stdout: any, stderr: any) => {
       if (error) {
         console.error('stderr', error);
         reject(error);
       }
-      resolve(stdout);
+      resolve([stdout, false]);
     }));
   }
 

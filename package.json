@@ -86,9 +86,10 @@
           "description": "",
           "default": "auto",
           "type": "string",
-          "enum": ["auto", "debug dump", "disabled"],
+          "enum": ["auto", "test query", "debug dump", "disabled"],
           "enumDescriptions": [
-            "Selects the best fetch mode for the current architecture",
+            "Selects the best fetch mode for the current operating system and CppUTest capabilities",
+            "Gets test location information by querying the test executables",
             "Gets test location information from debug symbols in test executables",
             "Test location fetch disabled"
           ],
