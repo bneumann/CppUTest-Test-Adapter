@@ -53,8 +53,8 @@ export default class CppUTestContainer {
         for (const test of (testGroup as CppUTestGroup).children) {
           const runner = this.runners.filter(r => r.Name === executableGroup.label)[0];
           this.onTestStartHandler((test as CppUTest));
-          const resultString = await runner.RunTest(testGroup.label, test.label);
-          const testResult = this.resultParser.GetResult(resultString);
+          const runResult = await runner.RunTest(testGroup.label, test.label);
+          const testResult = this.resultParser.GetResult(runResult);
           this.onTestFinishHandler((test as CppUTest), testResult);
           testResults.push(testResult);
         }
@@ -80,8 +80,8 @@ export default class CppUTestContainer {
         if (test && runner) {
           this.onTestStartHandler(test);
           try {
-            const resultString = await runner.RunTest(test.group, test.label);
-            const testResult = this.resultParser.GetResult(resultString);
+            const runResult = await runner.RunTest(test.group, test.label);
+            const testResult = this.resultParser.GetResult(runResult);
             this.onTestFinishHandler(test, testResult);
             testResults.push(testResult);
           } catch (error) {

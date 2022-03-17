@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { mock, instance, when, verify, anything, reset, anyString } from "ts-mockito";
-import ExecutableRunner from "../src/Infrastructure/ExecutableRunner";
+import ExecutableRunner, { RunResult, RunResultStatus } from "../src/Infrastructure/ExecutableRunner";
 import CppUTestContainer from "../src/Domain/CppUTestContainer";
 import { CppUTestGroup } from "../src/Domain/CppUTestGroup";
 import { TestSuiteInfo } from "vscode-test-adapter-api";
@@ -214,7 +214,7 @@ describe("CppUTestContainer should", () => {
 
   it("return a TestResult after sucessful run", async () => {
     const mockRunner = createMockRunner("Exec1", TestLocationFetchMode.Disabled, "Group1.Test1 Group1.Test2", false);
-    when(mockRunner.RunTest(anyString(), anyString())).thenResolve("Success");
+    when(mockRunner.RunTest(anyString(), anyString())).thenResolve(new RunResult(RunResultStatus.Success, "Success"));
 
     const container = new CppUTestContainer(instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
 
@@ -228,12 +228,17 @@ describe("CppUTestContainer should", () => {
   })
 
   it("return a TestResult after failed run", async () => {
-    const mockRunner = createMockRunner("Exec1", TestLocationFetchMode.Disabled, "Group1.Test1 Group1.Test2", false);
-    when(mockRunner.RunTest("Group1", "Test1")).thenResolve("Success");
-    when(mockRunner.RunTest("Group1", "Test2")).thenResolve("Failed");
+    const mockRunner = createMockRunner("Exec1", TestLocationFetchMode.Disabled, "Group1.Test1 Group1.Test2 Group1.Test3", false);
+    const runResult1 = new RunResult(RunResultStatus.Success, "Success");
+    const runResult2 = new RunResult(RunResultStatus.Failure, "Failed");
+    const runResult3 = new RunResult(RunResultStatus.Error, "Error")
+    when(mockRunner.RunTest("Group1", "Test1")).thenResolve(runResult1);
+    when(mockRunner.RunTest("Group1", "Test2")).thenResolve(runResult2);
+    when(mockRunner.RunTest("Group1", "Test3")).thenResolve(runResult3);
     reset(mockResultParser);
-    when(mockResultParser.GetResult("Success")).thenReturn(new TestResult(TestState.Passed, ""));
-    when(mockResultParser.GetResult("Failed")).thenReturn(new TestResult(TestState.Failed, "Failed"));
+    when(mockResultParser.GetResult(runResult1)).thenReturn(new TestResult(TestState.Passed, ""));
+    when(mockResultParser.GetResult(runResult2)).thenReturn(new TestResult(TestState.Failed, "Failed"));
+    when(mockResultParser.GetResult(runResult3)).thenReturn(new TestResult(TestState.Failed, "Error"));
     const container = new CppUTestContainer(instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
 
     const allTests = await container.LoadTests([instance(mockRunner)]);
@@ -242,7 +247,8 @@ describe("CppUTestContainer should", () => {
       .eventually.fulfilled
       .and.to.have.deep.members([
         { message: "", state: TestState.Passed },
-        { message: "Failed", state: TestState.Failed }
+        { message: "Failed", state: TestState.Failed },
+        { message: "Error", state: TestState.Failed }
       ])
   })
 

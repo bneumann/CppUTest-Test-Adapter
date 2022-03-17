@@ -1,9 +1,10 @@
 import { expect, use as chaiUse } from 'chai';
 import * as chaiAsPromised from "chai-as-promised";
-import ExecutableRunner from '../src/Infrastructure/ExecutableRunner';
+import ExecutableRunner, { RunResultStatus, RunResult } from '../src/Infrastructure/ExecutableRunner';
 import { ProcessExecuter } from '../src/Application/ProcessExecuter';
 import { anything, instance, mock, verify, when } from "ts-mockito";
 import { TestLocationFetchMode } from '../src/Infrastructure/SettingsProvider';
+import { ExecException } from "child_process";
 
 chaiUse(chaiAsPromised);
 
@@ -30,6 +31,18 @@ const debugStrings = [
     value: "test\nline\nout\nthat\nis\nlonger"
   }
 ]
+
+class ExecError implements ExecException {
+  name: string = "";
+  message: string = "";
+  cmd?: string;
+  killed?: boolean;
+  code?: number;
+  signal?: string;
+  constructor(code?: number) {
+    this.code = code;
+  }
+}
 
 function createFailingTestString(group: string, test: string): string {
   return `TEST(${group}, ${test})\n` +
@@ -98,16 +111,40 @@ describe("ExecutableRunner should", () => {
     expect(calledOptions.cwd).to.be.eq("/tmp/myPath");
   })
 
-  it("return the correct string on run", async () => {
+  it("return the correct string on successful run", async () => {
     const resultString = createFailingTestString("myGroup", "myTest");
     const processExecuter = setupMockCalls(undefined, resultString, "");
     const command = "runnable";
 
     let runner = new ExecutableRunner(processExecuter, command);
 
-    let actualResultString = await runner.RunTest("myGroup", "myTest");
+    let actualTestOutput = await runner.RunTest("myGroup", "myTest");
 
-    expect(actualResultString).to.be.eq(resultString);
+    expect(actualTestOutput).to.be.deep.equal(new RunResult(RunResultStatus.Success, resultString));
+  })
+
+  it("return the correct string on run with failure", async () => {
+    const errorString = "unexpected failure string";
+    const processExecuter = setupMockCalls(new ExecError(1), errorString, "");
+    const command = "runnable";
+
+    let runner = new ExecutableRunner(processExecuter, command);
+
+    let actualTestOutput = await runner.RunTest("myGroup", "myTest");
+
+    expect(actualTestOutput).to.be.deep.equal(new RunResult(RunResultStatus.Failure, errorString));
+  })
+
+  it("return the correct string on run with error", async () => {
+    const errorString = "unexpected error string";
+    const processExecuter = setupMockCalls(new ExecError(1), "", errorString);
+    const command = "runnable";
+
+    let runner = new ExecutableRunner(processExecuter, command);
+
+    let actualTestOutput = await runner.RunTest("myGroup", "myTest");
+
+    expect(actualTestOutput).to.be.deep.equal(new RunResult(RunResultStatus.Error, errorString));
   })
 
   it("kill the process currently running", () => {
@@ -120,7 +157,7 @@ describe("ExecutableRunner should", () => {
   })
 })
 
-function setupMockCalls(error: Error | undefined, returnValue: string, errorValue: string) {
+function setupMockCalls(error: ExecException | undefined, returnValue: string, errorValue: string) {
   const mockedExecuter = mock<ProcessExecuter>();
   when(mockedExecuter.Exec(anything(), anything(), anything())).thenCall((cmd: string, options: any, callback: Function) => callback(error, returnValue, errorValue));
   when(mockedExecuter.ExecFile(anything(), anything(), anything(), anything())).thenCall((cmd: string, args: any, options: any, callback: Function) => callback(error, returnValue, errorValue));

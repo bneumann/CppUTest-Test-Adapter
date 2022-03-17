@@ -3,6 +3,21 @@ import { basename, dirname } from "path";
 import { ProcessExecuter } from "../Application/ProcessExecuter";
 import { TestLocationFetchMode } from "./SettingsProvider";
 
+export enum RunResultStatus {
+  Success,
+  Failure,
+  Error,
+}
+
+export class RunResult {
+  readonly Status: RunResultStatus;
+  readonly Text: string;
+  constructor(status: RunResultStatus, text: string) {
+    this.Status = status;
+    this.Text = text;
+  }
+}
+
 export default class ExecutableRunner {
   private readonly exec: Function;
   private readonly execFile: Function;
@@ -106,14 +121,20 @@ export default class ExecutableRunner {
     });
   }
 
-  public RunTest(group: string, test: string): Promise<string> {
-    return new Promise<string>((resolve, reject) => {
+  public RunTest(group: string, test: string): Promise<RunResult> {
+    return new Promise<RunResult>((resolve, reject) => {
       this.execFile(this.command, ["-sg", group, "-sn", test, "-v"], { cwd: this.workingDirectory }, (error: ExecException | null, stdout: string, stderr: string) => {
         if (error && error.code === null) {
           console.error('stderr', error);
           reject(stderr);
         }
-        resolve(stdout);
+        if (stderr.trim() != "") {
+          resolve(new RunResult(RunResultStatus.Error, stderr));
+        } else if (error && error.code !== 0) {
+          resolve(new RunResult(RunResultStatus.Failure, stdout));
+        } else {
+          resolve(new RunResult(RunResultStatus.Success, stdout));
+        }
       })
     });
   }
