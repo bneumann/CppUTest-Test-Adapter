@@ -1,36 +1,43 @@
 [
         {
                 "name": "failingTest1",
+                "status": "Failure",
                 "value": [
                         "TEST(ClassName, Create)",
                         "C:\\Users\\tests\\basicTests.cpp(58): error: Failure in TEST(ClassName, Create)",
                         "        Message: This is failing",
                         "        CHECK(false) failed",
-                        "",
-                        "- 0 ms"
+                        " ",
+                        " - 0 ms"
                 ],
                 "expected": [
-                        "Message: This is failing",
-                        "CHECK(false) failed"
+                        "C:\\Users\\tests\\basicTests.cpp(58): error: Failure in TEST(ClassName, Create)",
+                        "        Message: This is failing",
+                        "        CHECK(false) failed"
                 ]
         },
         {
                 "name": "failingTest2",
+                "status": "Failure",
                 "value": [
                         "TEST(ClassName, Create)",
                         "/tests/basicTests.cpp(43): error: Failure in TEST(SecondClass, ShouldFail)",
                         "Message: This is also failing",
+                        "",
                         "CHECK(false) failed",
                         "",
                         "- 0 ms"
                 ],
                 "expected": [
+                        "/tests/basicTests.cpp(43): error: Failure in TEST(SecondClass, ShouldFail)",
                         "Message: This is also failing",
+                        "",
                         "CHECK(false) failed"
                 ]
         },
         {
                 "name": "failingTest3",
+                "status": "Failure",
                 "value": [
                         "TEST(TEST_GROUP1, TEST1)Memutil uses static memory",
                         "Memutil heap size = 0x4000000 (67108864 bytes)",
@@ -40,20 +47,34 @@
                         "expected <0>",
                         "but was <-2>",
                         "difference starts at position 0 at: < -2 >",
-                        "^",
+                        "                                       ^",
                         "",
-                        "25 ms",
+                        "- 25 ms",
                         "Errors (1 failures, 1283 tests, 1 ran, 79 checks, 0 ignored, 1282 filtered out, 25 ms)"
                 ],
                 "expected":[
+                        "src/tests/omss_unit_tests/src/ut/ut_real/inventory_manager/TEST_GROUP1.cpp:51: error: Failure in TEST(TEST_GROUP1, TEST1)",
                         "expected <0>",
                         "but was <-2>",
                         "difference starts at position 0 at: < -2 >",
-                        "^"
+                        "                                       ^"
+                ]
+        },
+        {
+                "name": "failingTest4",
+                "status": "Error",
+                "value": [
+                        "terminate called after throwing an instance of 'std::runtime_error'",
+                        "  what():  Invalid parameter value."
+                ],
+                "expected": [
+                        "terminate called after throwing an instance of 'std::runtime_error'",
+                        "  what():  Invalid parameter value."
                 ]
         },
         {
                 "name": "passingTest1",
+                "status": "Success",
                 "value": [
                         "TEST(ClassName, ShouldPass) - 0 ms"
                 ],
@@ -61,6 +82,7 @@
         },
         {
                 "name": "passingTest2",
+                "status": "Success",
                 "value":[
                         "TEST(TEST_GROUP1, ouptpuTEST1)Memutil uses static memory",
                         "Memutil heap size = 0x4000000 (67108864 bytes)",
@@ -73,6 +95,7 @@
         },
         {
                 "name": "ignoredTest1",
+                "status": "Success",
                 "value": [
                         "IGNORE_TEST(SecondClass, ShouldBeIgnored) - 0 ms"
                 ],
@@ -80,6 +103,7 @@
         },
         {
                 "name":"ignoredTest2",
+                "status": "Success",
                 "value":[
                         "IGNORE_TEST(TEST_GROUP1, TEST1) - 0 ms",
                         "",
