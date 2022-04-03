@@ -5,7 +5,7 @@
   "icon": "img/icon.png",
   "author": "Benjamin Giesinger <benjamin.giesinger@gmail.com>",
   "publisher": "bneumann",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "license": "MIT",
   "homepage": "https://github.com/bneumann/CppUTest-Test-Adapter",
   "repository": {
@@ -86,7 +86,12 @@
           "description": "",
           "default": "auto",
           "type": "string",
-          "enum": ["auto", "test query", "debug dump", "disabled"],
+          "enum": [
+            "auto",
+            "test query",
+            "debug dump",
+            "disabled"
+          ],
           "enumDescriptions": [
             "Selects the best fetch mode for the current operating system and CppUTest capabilities",
             "Gets test location information by querying the test executables",
