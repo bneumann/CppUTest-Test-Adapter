@@ -1,11 +1,11 @@
 import { expect } from "chai";
 import { mock, instance, when, verify, anything, reset, anyString } from "ts-mockito";
-import ExecutableRunner from "../src/Infrastructure/ExecutableRunner";
+import ExecutableRunner, { RunResult, RunResultStatus } from "../src/Infrastructure/ExecutableRunner";
 import CppUTestContainer from "../src/Domain/CppUTestContainer";
 import { CppUTestGroup } from "../src/Domain/CppUTestGroup";
 import { TestSuiteInfo } from "vscode-test-adapter-api";
 import { TestResult } from "../src/Domain/TestResult";
-import { SettingsProvider } from "../src/Infrastructure/SettingsProvider";
+import { SettingsProvider, TestLocationFetchMode } from "../src/Infrastructure/SettingsProvider";
 import { VscodeAdapter } from "../src/Infrastructure/VscodeAdapter";
 import { DebugConfiguration, WorkspaceFolder } from "vscode";
 import { TestState } from "../src/Domain/TestState";
@@ -18,31 +18,114 @@ describe("CppUTestContainer should", () => {
   let mockResultParser: ResultParser;
 
   beforeEach(() => {
-    mockRunner = createMockRunner("Exec1", "Group1.Test1 Group2.Test2");
+    mockRunner = createMockRunner("Exec1", TestLocationFetchMode.Disabled, "Group1.Test1 Group2.Test2", false);
     mockSetting = mock<SettingsProvider>();
     mockAdapter = mock<VscodeAdapter>();
     mockResultParser = mock<ResultParser>();
     when(mockSetting.GetTestPath()).thenReturn("/test/myPath");
     when(mockSetting.GetTestRunners()).thenReturn(["/test/myPath/Exec1"]);
+    when(mockSetting.TestLocationFetchMode).thenReturn(TestLocationFetchMode.Disabled);
     when(mockResultParser.GetResult(anything())).thenReturn(new TestResult(TestState.Passed, ""));
   })
 
-  it("load all tests from all testrunners", async () => {
-    const mockRunner1 = createMockRunner("Exec1", "Group1.Test1 Group2.Test2");
-    const mockRunner2 = createMockRunner("Exec2", "Group4.Test1 Group5.Test2 Group5.Test42");
+  it("load all tests from all testrunners without location info", async () => {
+    const mockRunner1 = createMockRunner("Exec1", TestLocationFetchMode.Disabled, "Group1.Test1 Group2.Test2", false);
+    const mockRunner2 = createMockRunner("Exec2", TestLocationFetchMode.Disabled, "Group4.Test1 Group5.Test2 Group5.Test42", false);
+    const mockSetting = mock<SettingsProvider>();
+    when(mockSetting.TestLocationFetchMode).thenReturn(TestLocationFetchMode.Disabled);
 
     const container = new CppUTestContainer(instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
 
     const allTests = await container.LoadTests([instance(mockRunner1), instance(mockRunner2)]);
     expect(allTests).to.be.lengthOf(2);
+
     expect(allTests[0].label).to.be.eq("Exec1");
-    expect(allTests[1].label).to.be.eq("Exec2");
+    expect(allTests[0].children).to.be.lengthOf(2);
     expect(allTests[0].children[0].label).to.be.eq("Group1");
     expect(allTests[0].children[0].type).to.be.eq("suite");
+    expect((allTests[0].children[0] as CppUTestGroup).children).to.be.lengthOf(1);
     expect((allTests[0].children[0] as CppUTestGroup).children[0].label).to.be.eq("Test1");
+    expect((allTests[0].children[0] as CppUTestGroup).children[0].type).to.be.eq("test");
+    expect((allTests[0].children[0] as CppUTestGroup).children[0].file).to.be.eq(undefined);
+    expect((allTests[0].children[0] as CppUTestGroup).children[0].line).to.be.eq(undefined);
+    expect(allTests[0].children[1].label).to.be.eq("Group2");
+    expect(allTests[0].children[1].type).to.be.eq("suite");
+    expect((allTests[0].children[1] as CppUTestGroup).children).to.be.lengthOf(1);
+    expect((allTests[0].children[1] as CppUTestGroup).children[0].label).to.be.eq("Test2");
+    expect((allTests[0].children[1] as CppUTestGroup).children[0].type).to.be.eq("test");
+    expect((allTests[0].children[1] as CppUTestGroup).children[0].file).to.be.eq(undefined);
+    expect((allTests[0].children[1] as CppUTestGroup).children[0].line).to.be.eq(undefined);
 
     expect(allTests[1].label).to.be.eq("Exec2");
+    expect(allTests[1].children).to.be.lengthOf(2);
+    expect(allTests[1].children[0].label).to.be.eq("Group4");
+    expect(allTests[1].children[0].type).to.be.eq("suite");
+    expect((allTests[1].children[0] as CppUTestGroup).children).to.be.lengthOf(1);
+    expect((allTests[1].children[0] as CppUTestGroup).children[0].label).to.be.eq("Test1");
+    expect((allTests[1].children[0] as CppUTestGroup).children[0].type).to.be.eq("test");
+    expect((allTests[1].children[0] as CppUTestGroup).children[0].file).to.be.eq(undefined);
+    expect((allTests[1].children[0] as CppUTestGroup).children[0].line).to.be.eq(undefined);
+    expect(allTests[1].children[1].label).to.be.eq("Group5");
+    expect(allTests[1].children[1].type).to.be.eq("suite");
+    expect((allTests[1].children[1] as CppUTestGroup).children).to.be.lengthOf(2);
     expect((allTests[1].children[1] as CppUTestGroup).children[0].label).to.be.eq("Test42");
+    expect((allTests[1].children[1] as CppUTestGroup).children[0].type).to.be.eq("test");
+    expect((allTests[1].children[1] as CppUTestGroup).children[0].file).to.be.eq(undefined);
+    expect((allTests[1].children[1] as CppUTestGroup).children[0].line).to.be.eq(undefined);
+    expect((allTests[1].children[1] as CppUTestGroup).children[1].label).to.be.eq("Test2");
+    expect((allTests[1].children[1] as CppUTestGroup).children[1].type).to.be.eq("test");
+    expect((allTests[1].children[1] as CppUTestGroup).children[1].file).to.be.eq(undefined);
+    expect((allTests[1].children[1] as CppUTestGroup).children[1].line).to.be.eq(undefined);
+  })
+
+  it("load all tests from all testrunners with location info", async () => {
+    const mockRunner1 = createMockRunner("Exec1", TestLocationFetchMode.TestQuery, "Group1.Test1.Test.file.name.cpp.12\nGroup2.Test2.Test2.cpp.4356\n", true);
+    const mockRunner2 = createMockRunner("Exec2", TestLocationFetchMode.TestQuery, "Group4.Test1.File4.75\nGroup5.Test2.File5.342\nGroup5.Test42.File5.4", true);
+    const mockSetting = mock<SettingsProvider>();
+    when(mockSetting.TestLocationFetchMode).thenReturn(TestLocationFetchMode.TestQuery);
+
+    const container = new CppUTestContainer(instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
+
+    const allTests = await container.LoadTests([instance(mockRunner1), instance(mockRunner2)]);
+    expect(allTests).to.be.lengthOf(2);
+
+    expect(allTests[0].label).to.be.eq("Exec1");
+    expect(allTests[0].children).to.be.lengthOf(2);
+    expect(allTests[0].children[0].label).to.be.eq("Group1");
+    expect(allTests[0].children[0].type).to.be.eq("suite");
+    expect((allTests[0].children[0] as CppUTestGroup).children).to.be.lengthOf(1);
+    expect((allTests[0].children[0] as CppUTestGroup).children[0].label).to.be.eq("Test1");
+    expect((allTests[0].children[0] as CppUTestGroup).children[0].type).to.be.eq("test");
+    expect((allTests[0].children[0] as CppUTestGroup).children[0].file).to.be.eq("Test.file.name.cpp");
+    expect((allTests[0].children[0] as CppUTestGroup).children[0].line).to.be.eq(12);
+    expect(allTests[0].children[1].label).to.be.eq("Group2");
+    expect(allTests[0].children[1].type).to.be.eq("suite");
+    expect((allTests[0].children[1] as CppUTestGroup).children).to.be.lengthOf(1);
+    expect((allTests[0].children[1] as CppUTestGroup).children[0].label).to.be.eq("Test2");
+    expect((allTests[0].children[1] as CppUTestGroup).children[0].type).to.be.eq("test");
+    expect((allTests[0].children[1] as CppUTestGroup).children[0].file).to.be.eq("Test2.cpp");
+    expect((allTests[0].children[1] as CppUTestGroup).children[0].line).to.be.eq(4356);
+
+    expect(allTests[1].label).to.be.eq("Exec2");
+    expect(allTests[1].children).to.be.lengthOf(2);
+    expect(allTests[1].children[0].label).to.be.eq("Group4");
+    expect(allTests[1].children[0].type).to.be.eq("suite");
+    expect((allTests[1].children[0] as CppUTestGroup).children).to.be.lengthOf(1);
+    expect((allTests[1].children[0] as CppUTestGroup).children[0].label).to.be.eq("Test1");
+    expect((allTests[1].children[0] as CppUTestGroup).children[0].type).to.be.eq("test");
+    expect((allTests[1].children[0] as CppUTestGroup).children[0].file).to.be.eq("File4");
+    expect((allTests[1].children[0] as CppUTestGroup).children[0].line).to.be.eq(75);
+    expect(allTests[1].children[1].label).to.be.eq("Group5");
+    expect(allTests[1].children[1].type).to.be.eq("suite");
+    expect((allTests[1].children[1] as CppUTestGroup).children).to.be.lengthOf(2);
+    expect((allTests[1].children[1] as CppUTestGroup).children[0].label).to.be.eq("Test42");
+    expect((allTests[1].children[1] as CppUTestGroup).children[0].type).to.be.eq("test");
+    expect((allTests[1].children[1] as CppUTestGroup).children[0].file).to.be.eq("File5");
+    expect((allTests[1].children[1] as CppUTestGroup).children[0].line).to.be.eq(4);
+    expect((allTests[1].children[1] as CppUTestGroup).children[1].label).to.be.eq("Test2");
+    expect((allTests[1].children[1] as CppUTestGroup).children[1].type).to.be.eq("test");
+    expect((allTests[1].children[1] as CppUTestGroup).children[1].file).to.be.eq("File5");
+    expect((allTests[1].children[1] as CppUTestGroup).children[1].line).to.be.eq(342);
   })
 
   it("reload all tests after clear", async () => {
@@ -61,7 +144,8 @@ describe("CppUTestContainer should", () => {
   })
 
   it("run all tests", async () => {
-    const mockRunner = createMockRunner("Exec1", "Group1.Test1 Group2.Test2");
+    const mockRunner = createMockRunner("Exec1", TestLocationFetchMode.Disabled, "Group1.Test1 Group2.Test2", false);
+    when(mockSetting.TestLocationFetchMode).thenReturn(TestLocationFetchMode.Disabled);
 
     const container = new CppUTestContainer(instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
 
@@ -72,7 +156,7 @@ describe("CppUTestContainer should", () => {
   })
 
   it("run test by id", async () => {
-    const mockRunner = createMockRunner("Exec1", "Group1.Test1 Group2.Test2");
+    const mockRunner = createMockRunner("Exec1", TestLocationFetchMode.Disabled, "Group1.Test1 Group2.Test2", false);
 
     const container = new CppUTestContainer(instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
 
@@ -97,8 +181,8 @@ describe("CppUTestContainer should", () => {
   })
 
   it("run tests by executable group id", async () => {
-    const mockRunner1 = createMockRunner("Exec1", "Group1.Test1 Group2.Test2");
-    const mockRunner2 = createMockRunner("Exec2", "Group3.Test1 Group4.Test2");
+    const mockRunner1 = createMockRunner("Exec1", TestLocationFetchMode.Disabled, "Group1.Test1 Group2.Test2", false);
+    const mockRunner2 = createMockRunner("Exec2", TestLocationFetchMode.Disabled, "Group3.Test1 Group4.Test2", false);
 
     const container = new CppUTestContainer(instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
 
@@ -112,7 +196,7 @@ describe("CppUTestContainer should", () => {
   })
 
   it("run tests by group ids", async () => {
-    const mockRunner = createMockRunner("Exec1", "Group1.Test1 Group1.Test2 Group2.Test2 Group2.Test5");
+    const mockRunner = createMockRunner("Exec1", TestLocationFetchMode.Disabled, "Group1.Test1 Group1.Test2 Group2.Test2 Group2.Test5", false);
 
     const container = new CppUTestContainer(instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
 
@@ -129,8 +213,8 @@ describe("CppUTestContainer should", () => {
   })
 
   it("return a TestResult after sucessful run", async () => {
-    const mockRunner = createMockRunner("Exec1", "Group1.Test1 Group1.Test2");
-    when(mockRunner.RunTest(anyString(), anyString())).thenResolve("Success");
+    const mockRunner = createMockRunner("Exec1", TestLocationFetchMode.Disabled, "Group1.Test1 Group1.Test2", false);
+    when(mockRunner.RunTest(anyString(), anyString())).thenResolve(new RunResult(RunResultStatus.Success, "Success"));
 
     const container = new CppUTestContainer(instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
 
@@ -144,12 +228,17 @@ describe("CppUTestContainer should", () => {
   })
 
   it("return a TestResult after failed run", async () => {
-    const mockRunner = createMockRunner("Exec1", "Group1.Test1 Group1.Test2");
-    when(mockRunner.RunTest("Group1", "Test1")).thenResolve("Success");
-    when(mockRunner.RunTest("Group1", "Test2")).thenResolve("Failed");
+    const mockRunner = createMockRunner("Exec1", TestLocationFetchMode.Disabled, "Group1.Test1 Group1.Test2 Group1.Test3", false);
+    const runResult1 = new RunResult(RunResultStatus.Success, "Success");
+    const runResult2 = new RunResult(RunResultStatus.Failure, "Failed");
+    const runResult3 = new RunResult(RunResultStatus.Error, "Error")
+    when(mockRunner.RunTest("Group1", "Test1")).thenResolve(runResult1);
+    when(mockRunner.RunTest("Group1", "Test2")).thenResolve(runResult2);
+    when(mockRunner.RunTest("Group1", "Test3")).thenResolve(runResult3);
     reset(mockResultParser);
-    when(mockResultParser.GetResult("Success")).thenReturn(new TestResult(TestState.Passed, ""));
-    when(mockResultParser.GetResult("Failed")).thenReturn(new TestResult(TestState.Failed, "Failed"));
+    when(mockResultParser.GetResult(runResult1)).thenReturn(new TestResult(TestState.Passed, ""));
+    when(mockResultParser.GetResult(runResult2)).thenReturn(new TestResult(TestState.Failed, "Failed"));
+    when(mockResultParser.GetResult(runResult3)).thenReturn(new TestResult(TestState.Failed, "Error"));
     const container = new CppUTestContainer(instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
 
     const allTests = await container.LoadTests([instance(mockRunner)]);
@@ -158,7 +247,8 @@ describe("CppUTestContainer should", () => {
       .eventually.fulfilled
       .and.to.have.deep.members([
         { message: "", state: TestState.Passed },
-        { message: "Failed", state: TestState.Failed }
+        { message: "Failed", state: TestState.Failed },
+        { message: "Error", state: TestState.Failed }
       ])
   })
 
@@ -211,6 +301,7 @@ describe("CppUTestContainer should", () => {
   it("thrown an error if the debugger is started without config", async () => {
     mockSetting = mock<SettingsProvider>();
     when(mockSetting.GetDebugConfiguration()).thenReturn("");
+    when(mockSetting.TestLocationFetchMode).thenReturn(TestLocationFetchMode.Disabled);
     const container = new CppUTestContainer(instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
 
     const allTests = await container.LoadTests([instance(mockRunner)]);
@@ -247,7 +338,7 @@ describe("CppUTestContainer should", () => {
   })
 
   it("kill the process currently running", async () => {
-    const mockRunner = createMockRunner("Exec1", "Group1.Test1 Group2.Test2");
+    const mockRunner = createMockRunner("Exec1", TestLocationFetchMode.Disabled, "Group1.Test1 Group2.Test2", false);
     const container = new CppUTestContainer(instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
     
     await container.LoadTests([instance(mockRunner)]);
@@ -257,9 +348,9 @@ describe("CppUTestContainer should", () => {
   })
 });
 
-function createMockRunner(runnerName: string, testListString: string) {
+function createMockRunner(runnerName: string, fetchMode: TestLocationFetchMode, testListString: string, hasLocation: boolean) {
   const mockRunner = mock<ExecutableRunner>();
   when(mockRunner.Name).thenReturn(runnerName);
-  when(mockRunner.GetTestList()).thenResolve(testListString);
+  when(mockRunner.GetTestList(fetchMode)).thenResolve([testListString, hasLocation]);
   return mockRunner;
 }

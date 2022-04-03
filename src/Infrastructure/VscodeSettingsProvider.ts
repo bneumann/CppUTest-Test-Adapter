@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { glob } from 'glob';
-import { SettingsProvider } from './SettingsProvider';
+import { SettingsProvider, TestLocationFetchMode } from './SettingsProvider';
 
 export default class VscodeSettingsProvider implements SettingsProvider {
   private config: vscode.WorkspaceConfiguration;
@@ -27,6 +27,19 @@ export default class VscodeSettingsProvider implements SettingsProvider {
     return this.ResolveSettingsVariable(this.config.testExecutablePath);
   }
 
+  public get TestLocationFetchMode(): TestLocationFetchMode {
+    switch(this.config.testLocationFetchMode) {
+      case 'test query':
+        return TestLocationFetchMode.TestQuery;
+      case 'debug dump':
+        return TestLocationFetchMode.DebugDump;
+      case 'auto':
+        return TestLocationFetchMode.Auto;
+      case 'disabled':
+      default:
+        return TestLocationFetchMode.Disabled;
+    }
+  }
 
   public GetDebugConfiguration(): (vscode.DebugConfiguration | string) {
     // Thanks to: https://github.com/matepek/vscode-catch2-test-adapter/blob/9a2e9f5880ef3907d80ff99f3d6d028270923c95/src/Configurations.ts#L125

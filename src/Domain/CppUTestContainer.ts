@@ -6,7 +6,7 @@ import { CppUTest } from "./CppUTest";
 import { TestState } from "./TestState";
 import { ResultParser } from "./ResultParser";
 import ExecutableRunner from "../Infrastructure/ExecutableRunner";
-import { SettingsProvider } from "../Infrastructure/SettingsProvider";
+import { SettingsProvider, TestLocationFetchMode } from "../Infrastructure/SettingsProvider";
 import { VscodeAdapter } from "../Infrastructure/VscodeAdapter";
 
 export default class CppUTestContainer {
@@ -36,8 +36,8 @@ export default class CppUTestContainer {
   public LoadTests(runners: ExecutableRunner[]): Promise<CppUTestSuite[]> {
     this.runners = runners;
     return Promise.all(this.runners
-      .map(runner => runner.GetTestList()
-        .then(testString => this.UpdateTestSuite(runner, testString))
+      .map(runner => runner.GetTestList(this.settingsProvider.TestLocationFetchMode)
+        .then(testList => this.UpdateTestSuite(runner, testList[0], testList[1]))
         .catch(error => this.CreateTestSuiteError(runner.Name))
       ));
   }
@@ -53,8 +53,8 @@ export default class CppUTestContainer {
         for (const test of (testGroup as CppUTestGroup).children) {
           const runner = this.runners.filter(r => r.Name === executableGroup.label)[0];
           this.onTestStartHandler((test as CppUTest));
-          const resultString = await runner.RunTest(testGroup.label, test.label);
-          const testResult = this.resultParser.GetResult(resultString);
+          const runResult = await runner.RunTest(testGroup.label, test.label);
+          const testResult = this.resultParser.GetResult(runResult);
           this.onTestFinishHandler((test as CppUTest), testResult);
           testResults.push(testResult);
         }
@@ -80,8 +80,8 @@ export default class CppUTestContainer {
         if (test && runner) {
           this.onTestStartHandler(test);
           try {
-            const resultString = await runner.RunTest(test.group, test.label);
-            const testResult = this.resultParser.GetResult(resultString);
+            const runResult = await runner.RunTest(test.group, test.label);
+            const testResult = this.resultParser.GetResult(runResult);
             this.onTestFinishHandler(test, testResult);
             testResults.push(testResult);
           } catch (error) {
@@ -145,15 +145,18 @@ export default class CppUTestContainer {
     return Array<CppUTest>().concat(...tests);
   }
 
-  private async UpdateTestSuite(runner: ExecutableRunner, testString: string): Promise<CppUTestSuite> {
+  private async UpdateTestSuite(runner: ExecutableRunner, testString: string, hasLocation: boolean): Promise<CppUTestSuite> {
     const testSuite = this.GetTestSuite(runner.Name);
-    testSuite.UpdateFromTestListString(testString);
-    for(const test of testSuite.Tests) {
-      try {
-        const debugString = await runner.GetDebugSymbols(test.group, test.label);
-        test.AddDebugInformation(debugString);
-      } catch (error) {
-        console.error(error);
+    testSuite.UpdateFromTestListString(testString, hasLocation);
+    if((this.settingsProvider.TestLocationFetchMode == TestLocationFetchMode.DebugDump) ||
+       ((this.settingsProvider.TestLocationFetchMode == TestLocationFetchMode.Auto) && !hasLocation && (process.platform != "win32"))) {
+      for(const test of testSuite.Tests) {
+        try {
+          const debugString = await runner.GetDebugSymbols(test.group, test.label);
+          test.AddDebugInformation(debugString);
+        } catch (error) {
+          console.error(error);
+        }
       }
     }
     return testSuite;

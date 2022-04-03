@@ -1,19 +1,23 @@
 import { expect, use as chaiUse } from 'chai';
 import * as chaiAsPromised from "chai-as-promised";
-import ExecutableRunner from '../src/Infrastructure/ExecutableRunner';
+import ExecutableRunner, { RunResultStatus, RunResult } from '../src/Infrastructure/ExecutableRunner';
 import { ProcessExecuter } from '../src/Application/ProcessExecuter';
 import { anything, instance, mock, verify, when } from "ts-mockito";
+import { TestLocationFetchMode } from '../src/Infrastructure/SettingsProvider';
+import { ExecException } from "child_process";
 
 chaiUse(chaiAsPromised);
 
 const outputStrings = [
   {
     name: "short",
-    value: "Group1.Test1 Group2.Test2"
+    value: "Group1.Test1.File.Name1.cpp.789\nGroup2.File_name_2.874",
+    hasLocation: true
   },
   {
     name: "long",
-    value: "Group1.Test1 Group2.Test2 Group2.Test3 Group2.Test4"
+    value: "Group1.Test1 Group2.Test2 Group2.Test3 Group2.Test4",
+    hasLocation: false
   }
 ]
 
@@ -27,6 +31,18 @@ const debugStrings = [
     value: "test\nline\nout\nthat\nis\nlonger"
   }
 ]
+
+class ExecError implements ExecException {
+  name: string = "";
+  message: string = "";
+  cmd?: string;
+  killed?: boolean;
+  code?: number;
+  signal?: string;
+  constructor(code?: number) {
+    this.code = code;
+  }
+}
 
 function createFailingTestString(group: string, test: string): string {
   return `TEST(${group}, ${test})\n` +
@@ -45,9 +61,10 @@ describe("ExecutableRunner should", () => {
 
       let runner = new ExecutableRunner(processExecuter, command);
 
-      let testListString = await runner.GetTestList();
+      let testList = await runner.GetTestList(testOutput.hasLocation ? TestLocationFetchMode.TestQuery : TestLocationFetchMode.Disabled);
 
-      expect(testListString).to.be.eq(testOutput.value);
+      expect(testList[0]).to.be.eq(testOutput.value);
+      expect(testList[1]).to.be.eq(testOutput.hasLocation);
     })
   })
 
@@ -56,7 +73,7 @@ describe("ExecutableRunner should", () => {
     const command = "runnable";
 
     let runner = new ExecutableRunner(processExecuter, command);
-    return expect(runner.GetTestList()).to.be.eventually.
+    return expect(runner.GetTestList(TestLocationFetchMode.Auto)).to.be.eventually.
       be.rejectedWith("whoops")
       .and.be.an.instanceOf(Error)
   })
@@ -90,20 +107,44 @@ describe("ExecutableRunner should", () => {
     });
 
     let runner = new ExecutableRunner(instance(processExecuter), command, "/tmp/myPath");
-    await runner.GetTestList();
+    await runner.GetTestList(TestLocationFetchMode.Auto);
     expect(calledOptions.cwd).to.be.eq("/tmp/myPath");
   })
 
-  it("return the correct string on run", async () => {
+  it("return the correct string on successful run", async () => {
     const resultString = createFailingTestString("myGroup", "myTest");
     const processExecuter = setupMockCalls(undefined, resultString, "");
     const command = "runnable";
 
     let runner = new ExecutableRunner(processExecuter, command);
 
-    let actualResultString = await runner.RunTest("myGroup", "myTest");
+    let actualTestOutput = await runner.RunTest("myGroup", "myTest");
 
-    expect(actualResultString).to.be.eq(resultString);
+    expect(actualTestOutput).to.be.deep.equal(new RunResult(RunResultStatus.Success, resultString));
+  })
+
+  it("return the correct string on run with failure", async () => {
+    const errorString = "unexpected failure string";
+    const processExecuter = setupMockCalls(new ExecError(1), errorString, "");
+    const command = "runnable";
+
+    let runner = new ExecutableRunner(processExecuter, command);
+
+    let actualTestOutput = await runner.RunTest("myGroup", "myTest");
+
+    expect(actualTestOutput).to.be.deep.equal(new RunResult(RunResultStatus.Failure, errorString));
+  })
+
+  it("return the correct string on run with error", async () => {
+    const errorString = "unexpected error string";
+    const processExecuter = setupMockCalls(new ExecError(1), "", errorString);
+    const command = "runnable";
+
+    let runner = new ExecutableRunner(processExecuter, command);
+
+    let actualTestOutput = await runner.RunTest("myGroup", "myTest");
+
+    expect(actualTestOutput).to.be.deep.equal(new RunResult(RunResultStatus.Error, errorString));
   })
 
   it("kill the process currently running", () => {
@@ -116,7 +157,7 @@ describe("ExecutableRunner should", () => {
   })
 })
 
-function setupMockCalls(error: Error | undefined, returnValue: string, errorValue: string) {
+function setupMockCalls(error: ExecException | undefined, returnValue: string, errorValue: string) {
   const mockedExecuter = mock<ProcessExecuter>();
   when(mockedExecuter.Exec(anything(), anything(), anything())).thenCall((cmd: string, options: any, callback: Function) => callback(error, returnValue, errorValue));
   when(mockedExecuter.ExecFile(anything(), anything(), anything(), anything())).thenCall((cmd: string, args: any, options: any, callback: Function) => callback(error, returnValue, errorValue));
