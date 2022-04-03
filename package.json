@@ -31,7 +31,8 @@
     "rebuild": "npm run clean && npm run build",
     "package": "vsce package",
     "publish": "npm run rebuild && vsce publish",
-    "publish:patch": "npm run rebuild && vsce publish patch"
+    "publish:patch": "npm run rebuild && vsce publish publish:patch",
+    "publish:pre": "npm run rebuild && vsce publish --pre-release -p VSCE_TOKEN publish:patch"
   },
   "dependencies": {
     "@types/xml2js": "^0.4.9",
