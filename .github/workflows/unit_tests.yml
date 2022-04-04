@@ -29,6 +29,6 @@ jobs:
 
       - name: Publish Extension Pre-Release
         env:
-          VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: npm run publish:pre
 
