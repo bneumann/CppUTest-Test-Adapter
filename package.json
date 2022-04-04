@@ -32,8 +32,7 @@
     "package": "vsce package",
     "publish": "npm run rebuild && vsce publish",
     "publish:patch": "npm run rebuild && vsce publish patch",
-    "publish:pre": "npm run rebuild && vsce publish --pre-release -p $VSCE_TOKEN",
-    "info": "echo VSCE_TOKEN"
+    "publish:pre": "npm run rebuild && vsce publish --pre-release"
   },
   "dependencies": {
     "@types/xml2js": "^0.4.9",
