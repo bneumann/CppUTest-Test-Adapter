@@ -21,14 +21,3 @@ jobs:
 
       - name: Run Tests
         run: npm test
-
-      - name: Add git info
-        run: |
-          git config --global user.email "bot@newbucket.com"
-          git config --global user.name "Botty McBotface"
-
-      - name: Publish Extension Pre-Release
-        env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: npm run publish:pre
-
