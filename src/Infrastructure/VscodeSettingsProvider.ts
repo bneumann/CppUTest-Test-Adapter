@@ -49,7 +49,25 @@ export default class VscodeSettingsProvider implements SettingsProvider {
     const wpLaunchConfigs: string | undefined = vscode.workspace
       .getConfiguration('launch', vscode.workspace.workspaceFolders[0].uri)
       .get<string>('configurations');
+
+    const hasConfiguredLaunchProfiles: boolean = this.config.debugLaunchProfileName;
+
+    
     if (wpLaunchConfigs && Array.isArray(wpLaunchConfigs) && wpLaunchConfigs.length > 0) {
+      if(hasConfiguredLaunchProfiles) {
+        // try and match the config by name
+        for (let i = 0; i < wpLaunchConfigs.length; ++i) {
+          if (wpLaunchConfigs[i].name == this.config.debugLaunchConfigurationName) {
+            const debugConfig: vscode.DebugConfiguration = Object.assign({}, wpLaunchConfigs[i], {
+              program: "",
+              target: ""
+            });
+            return debugConfig;
+          }
+        }
+      } 
+      
+      //fallback to the first debug configuration that is a c++ debugger
       for (let i = 0; i < wpLaunchConfigs.length; ++i) {
         if (this.IsCCppDebugger(wpLaunchConfigs[i])) {
           const debugConfig: vscode.DebugConfiguration = Object.assign({}, wpLaunchConfigs[i], {
@@ -59,7 +77,9 @@ export default class VscodeSettingsProvider implements SettingsProvider {
           return debugConfig;
         }
       }
+      
     }
+    
     return "";
   }
 
