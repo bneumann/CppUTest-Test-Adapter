@@ -104,6 +104,12 @@
           "description": "Write diagnostic logs to the given file",
           "type": "string",
           "scope": "resource"
+        },
+        "cpputestTestAdapter.debugLaunchConfigurationName": {
+          "description": "The name of the configuration object from the launch.json file to use for debugging tests. Defaults to the first profile",
+          "default": "",
+          "type": "string",
+          "scope": "resource"
         }
       }
     }
