@@ -1,5 +1,6 @@
 name: Release
-on: [release]
+# on: [release]
+on: [push]
 jobs:
   build:
     name: 'Release package to marketplace'
@@ -11,6 +12,9 @@ jobs:
         with:
           node-version: 16
       - run: npm ci
+
+      - name: Build assembly
+        run: npm run build --if-present
       # - name: Publish to Open VSX Registry
       #   uses: HaaLeo/publish-vscode-extension@v1
       #   with:
