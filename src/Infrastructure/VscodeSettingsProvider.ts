@@ -50,9 +50,8 @@ export default class VscodeSettingsProvider implements SettingsProvider {
       .getConfiguration('launch', vscode.workspace.workspaceFolders[0].uri)
       .get<string>('configurations');
 
-    const hasConfiguredLaunchProfiles: boolean = this.config.debugLaunchProfileName;
+    const hasConfiguredLaunchProfiles: boolean = this.config.debugLaunchConfigurationName;
 
-    
     if (wpLaunchConfigs && Array.isArray(wpLaunchConfigs) && wpLaunchConfigs.length > 0) {
       if(hasConfiguredLaunchProfiles) {
         // try and match the config by name
