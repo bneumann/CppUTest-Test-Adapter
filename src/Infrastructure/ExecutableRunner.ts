@@ -19,24 +19,31 @@ export class RunResult {
   }
 }
 
+export interface ExecutableRunnerOptions {
+  workingDirectory?: string;
+  objDumpExecutable?: string;
+}
+
 export default class ExecutableRunner {
   private readonly exec: Function;
   private readonly execFile: Function;
   private readonly kill: Function;
   private readonly command: string;
   private readonly workingDirectory: string;
+  private readonly objDumpExecutable: string;
   private readonly tempFile: string;
   public readonly Name: string;
   private dumpCached: boolean;
   private tryGetLocation: boolean;
   private log: Log;
 
-  constructor(processExecuter: ProcessExecuter, command: string, log: Log, workingDirectory: string = dirname(command)) {
+  constructor(processExecuter: ProcessExecuter, command: string, log: Log, options?: ExecutableRunnerOptions) {
     this.exec = processExecuter.Exec;
     this.execFile = processExecuter.ExecFile;
     this.kill = processExecuter.KillProcess;
     this.command = command;
-    this.workingDirectory = workingDirectory;
+    this.workingDirectory = options?.workingDirectory ?? dirname(command);
+    this.objDumpExecutable = options?.objDumpExecutable ?? "objdump";
     this.Name = basename(command);
     this.tempFile = `${this.Name}.dump`
     this.dumpCached = false;
@@ -54,7 +61,7 @@ export default class ExecutableRunner {
         return this.GetTestListWithLocation(true);
       case TestLocationFetchMode.Auto:
         if (this.tryGetLocation) {
-          return this.GetTestListWithLocation(false).catch( () => {
+          return this.GetTestListWithLocation(false).catch(() => {
             this.tryGetLocation = false;
             return this.GetTestListGroupAndNames();
           });
@@ -111,7 +118,7 @@ export default class ExecutableRunner {
   private DumpSymbols(): Promise<void> {
     if (this.dumpCached) { return Promise.resolve(); }
     // Linux:
-    const sourceGrep = `objdump -lSd ${this.command} > ${this.tempFile}`;
+    const sourceGrep = `${this.objDumpExecutable} -lSd ${this.command} > ${this.tempFile}`;
     // Windows:
     // const sourceGrep = `windObjDumpOrWhatEver ${command} | findstr TEST_${group}_${test}`
     return new Promise<void>((resolve, reject) => {

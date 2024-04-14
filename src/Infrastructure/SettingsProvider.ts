@@ -8,6 +8,7 @@ export enum TestLocationFetchMode {
 }
 
 export interface SettingsProvider {
+  GetObjDumpPath(): string;
   GetTestRunners(): string[];
   GetTestPath(): string;
   get TestLocationFetchMode(): TestLocationFetchMode;
