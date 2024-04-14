@@ -1,13 +1,16 @@
 import * as vscode from 'vscode';
 import { glob } from 'glob';
 import { SettingsProvider, TestLocationFetchMode } from './SettingsProvider';
+import { Log } from 'vscode-test-adapter-util';
 
 export default class VscodeSettingsProvider implements SettingsProvider {
   private config: vscode.WorkspaceConfiguration;
+  private log: Log;
 
-  constructor() {
+  constructor(log: Log) {
     const configSection = "cpputestTestAdapter";
     this.config = vscode.workspace.getConfiguration(configSection);
+    this.log = log;
     vscode.workspace.onDidChangeConfiguration(event => {
       if (event.affectsConfiguration(configSection)) {
         this.config = vscode.workspace.getConfiguration(configSection);
@@ -64,8 +67,8 @@ export default class VscodeSettingsProvider implements SettingsProvider {
             return debugConfig;
           }
         }
-      } 
-      
+      }
+
       //fallback to the first debug configuration that is a c++ debugger
       for (let i = 0; i < wpLaunchConfigs.length; ++i) {
         if (this.IsCCppDebugger(wpLaunchConfigs[i])) {
@@ -76,9 +79,9 @@ export default class VscodeSettingsProvider implements SettingsProvider {
           return debugConfig;
         }
       }
-      
+
     }
-    
+
     return "";
   }
 
@@ -96,6 +99,9 @@ export default class VscodeSettingsProvider implements SettingsProvider {
 
   private SplitRunners(executablesString: string | undefined): string[] {
     if (executablesString) {
+      if(executablesString.indexOf(";") === -1){
+        return [this.ResolveSettingsVariable(executablesString)];
+      }
       return executablesString
         .split(";")
         .map(r => this.ResolveSettingsVariable(r))
@@ -115,8 +121,10 @@ export default class VscodeSettingsProvider implements SettingsProvider {
     if (input) {
       const result: string[] | null = input.match(/\$\{(.*)\}/gmi);
       if (result && result.length > 0) {
+        this.log.info(`replacing config variabe "${input}"`);
         input = input.replace(/(\$\{file\})/gmi, vscode.window.activeTextEditor ? vscode.window.activeTextEditor.document.uri.fsPath : "");
         input = input.replace(/(\$\{workspaceFolder\})/gmi, vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders[0].uri.fsPath : "");
+        this.log.info(`replaced variable is now "${input}"`);
       }
       return input;
     }

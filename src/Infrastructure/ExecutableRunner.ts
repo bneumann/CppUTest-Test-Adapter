@@ -2,6 +2,7 @@ import { ExecException } from "child_process";
 import { basename, dirname } from "path";
 import { ProcessExecuter } from "../Application/ProcessExecuter";
 import { TestLocationFetchMode } from "./SettingsProvider";
+import { Log } from "vscode-test-adapter-util";
 
 export enum RunResultStatus {
   Success,
@@ -28,8 +29,9 @@ export default class ExecutableRunner {
   public readonly Name: string;
   private dumpCached: boolean;
   private tryGetLocation: boolean;
+  private log: Log;
 
-  constructor(processExecuter: ProcessExecuter, command: string, workingDirectory: string = dirname(command)) {
+  constructor(processExecuter: ProcessExecuter, command: string, log: Log, workingDirectory: string = dirname(command)) {
     this.exec = processExecuter.Exec;
     this.execFile = processExecuter.ExecFile;
     this.kill = processExecuter.KillProcess;
@@ -38,12 +40,15 @@ export default class ExecutableRunner {
     this.Name = basename(command);
     this.tempFile = `${this.Name}.dump`
     this.dumpCached = false;
+    this.log = log;
     this.tryGetLocation = true;
+
   }
 
   public get Command(): string { return this.command; }
 
   public GetTestList(testLocationFetchMode: TestLocationFetchMode): Promise<[string, boolean]> {
+
     switch (testLocationFetchMode) {
       case TestLocationFetchMode.TestQuery:
         return this.GetTestListWithLocation(true);
@@ -65,10 +70,11 @@ export default class ExecutableRunner {
     return new Promise<[string, boolean]>((resolve, reject) => this.execFile(this.command, ["-ll"], { cwd: this.workingDirectory }, (error: any, stdout: any, stderr: any) => {
       if (error) {
         if (printError) {
-          console.error('stderr', error);
+          this.log.error(error);
         }
         reject(error);
       }
+      this.log.info(stdout);
       resolve([stdout, true]);
     }));
   }
