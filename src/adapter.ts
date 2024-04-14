@@ -40,7 +40,7 @@ export class CppUTestAdapter implements TestAdapter {
 
 		this.disposables.push(this.testsEmitter, this.testStatesEmitter, this.autorunEmitter);
 
-		this.settingsProvider = new VscodeSettingsProvider();
+		this.settingsProvider = new VscodeSettingsProvider(this.log);
 		this.processExecuter = new NodeProcessExecuter();
 		const vscodeAdapter = new VscodeAdapterImplementation();
 		const resultParser = new RegexResultParser();
@@ -101,7 +101,7 @@ export class CppUTestAdapter implements TestAdapter {
 
 	private async updateTests(): Promise<void> {
 		this.root.ClearTests();
-		const runners = this.settingsProvider.GetTestRunners().map(runner => new ExecutableRunner(this.processExecuter, runner));
+		const runners = this.settingsProvider.GetTestRunners().map(runner => new ExecutableRunner(this.processExecuter, runner, this.log));
 		const loadedTests = await this.root.LoadTests(runners);
 		this.mainSuite.children = loadedTests;
 		this.testsEmitter.fire(<TestLoadFinishedEvent>{ type: 'finished', suite: this.mainSuite });
