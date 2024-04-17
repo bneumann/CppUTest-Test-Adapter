@@ -1,0 +1,12 @@
+src/**
+**/*.map
+package-lock.json
+tsconfig.json
+.vscode/**
+.gitignore
+build
+build_linux
+bin
+CMakeLists.txt
+test
+tests
