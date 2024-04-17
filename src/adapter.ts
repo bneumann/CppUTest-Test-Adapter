@@ -9,7 +9,7 @@ import { TestResult } from './Domain/TestResult';
 import { CppUTest } from './Domain/CppUTest';
 import { RegexResultParser } from "./Domain/RegexResultParser";
 import VscodeSettingsProvider from "./Infrastructure/VscodeSettingsProvider";
-import ExecutableRunner from "./Infrastructure/ExecutableRunner";
+import ExecutableRunner, { ExecutableRunnerOptions } from "./Infrastructure/ExecutableRunner";
 import { NodeProcessExecuter } from './Application/NodeProcessExecuter';
 import { VscodeAdapterImplementation } from "./Application/VscodeAdapterImplementation";
 import { SettingsProvider } from "./Infrastructure/SettingsProvider";
@@ -101,10 +101,16 @@ export class CppUTestAdapter implements TestAdapter {
 
 	private async updateTests(): Promise<void> {
 		this.root.ClearTests();
-		const runners = this.settingsProvider.GetTestRunners().map(runner => new ExecutableRunner(this.processExecuter, runner, this.log));
+		const runners = this.settingsProvider.GetTestRunners().map(runner => new ExecutableRunner(this.processExecuter, runner, this.log, this.GetExecutionOptions()));
 		const loadedTests = await this.root.LoadTests(runners);
 		this.mainSuite.children = loadedTests;
 		this.testsEmitter.fire(<TestLoadFinishedEvent>{ type: 'finished', suite: this.mainSuite });
+	}
+	private GetExecutionOptions(): ExecutableRunnerOptions | undefined {
+		return {
+			objDumpExecutable: this.settingsProvider.GetObjDumpPath(),
+			workingDirectory: undefined // this is calculated inside the ExecutableRunner, not really good style
+		}
 	}
 
 	private handleTestStarted(test: CppUTest): void {

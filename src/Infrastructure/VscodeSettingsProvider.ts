@@ -17,6 +17,9 @@ export default class VscodeSettingsProvider implements SettingsProvider {
       }
     })
   }
+  GetObjDumpPath(): string {
+    return this.ResolveSettingsVariable(this.config.objDumpExecutable);
+  }
 
   GetWorkspaceFolders(): readonly vscode.WorkspaceFolder[] | undefined {
     return vscode.workspace.workspaceFolders;

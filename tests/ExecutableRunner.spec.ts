@@ -61,7 +61,7 @@ describe("ExecutableRunner should", () => {
       const processExecuter = setupMockCalls(undefined, testOutput.value, "");
       const command = "runnable";
 
-      let runner = new ExecutableRunner(processExecuter, command, log);
+      let runner = new ExecutableRunner(processExecuter, command, log, undefined);
 
       let testList = await runner.GetTestList(testOutput.hasLocation ? TestLocationFetchMode.TestQuery : TestLocationFetchMode.Disabled);
 
@@ -111,7 +111,7 @@ describe("ExecutableRunner should", () => {
       callback(undefined, "Group1.Test1", undefined);
     });
 
-    let runner = new ExecutableRunner(instance(processExecuter), command, log, "/tmp/myPath");
+    let runner = new ExecutableRunner(instance(processExecuter), command, log, { "workingDirectory": "/tmp/myPath" });
     await runner.GetTestList(TestLocationFetchMode.Auto);
     expect(calledOptions.cwd).to.be.eq("/tmp/myPath");
   })
