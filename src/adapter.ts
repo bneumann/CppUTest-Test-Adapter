@@ -71,19 +71,21 @@ export class CppUTestAdapter implements TestAdapter {
 	public async run(tests: string[]): Promise<void> {
 		this.testStatesEmitter.fire(<TestRunStartedEvent>{ type: 'started', tests });
 		this.log.info('Running tests');
-		await this.updateTests();
-		if (tests.length == 1 && tests[0] == this.mainSuite.id || tests[0] == 'error') {
-			await this.root.RunAllTests();
-		} else {
-			await this.root.RunTest(...tests);
+		if (await this.updateTests())
+		{
+			if (tests.length == 1 && tests[0] == this.mainSuite.id || tests[0] == 'error') {
+				await this.root.RunAllTests();
+			} else {
+				await this.root.RunTest(...tests);
+			}
 		}
 		this.log.info('Done');
 		this.testStatesEmitter.fire(<TestRunFinishedEvent>{ type: 'finished' });
 	}
 
 	public async debug(tests: string[]): Promise<void> {
-		await this.updateTests();
-		return this.root.DebugTest(...tests);
+		if (await this.updateTests())
+			return this.root.DebugTest(...tests);
 	}
 
 	public cancel(): void {
@@ -99,7 +101,7 @@ export class CppUTestAdapter implements TestAdapter {
 		this.disposables = [];
 	}
 
-	private async updateTests(): Promise<void> {
+	private async updateTests(): Promise<boolean> {
 		const preLaunchTask = await this.getPreLaunchTask();
 		if (preLaunchTask) {
 			const errorCode = await this.runTask(preLaunchTask);
@@ -109,7 +111,7 @@ export class CppUTestAdapter implements TestAdapter {
 					type: 'finished',
 					errorMessage: `preLaunchTask "${preLaunchTask.name}" Failed [exit code: ${errorCode}]`,
 				});
-				return;
+				return false;
 			}
 		}
 		this.root.ClearTests();
@@ -117,6 +119,7 @@ export class CppUTestAdapter implements TestAdapter {
 		const loadedTests = await this.root.LoadTests(runners);
 		this.mainSuite.children = loadedTests;
 		this.testsEmitter.fire(<TestLoadFinishedEvent>{ type: 'finished', suite: this.mainSuite });
+		return true;
 	}
 
 	private async getPreLaunchTask(): Promise<vscode.Task | undefined> {
