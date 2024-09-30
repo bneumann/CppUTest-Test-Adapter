@@ -72,7 +72,7 @@ export class CppUTestAdapter implements TestAdapter {
 		this.testStatesEmitter.fire(<TestRunStartedEvent>{ type: 'started', tests });
 		this.log.info('Running tests');
 		await this.updateTests();
-		if (tests.length == 1 && tests[0] == this.mainSuite.id) {
+		if (tests.length == 1 && tests[0] == this.mainSuite.id || tests[0] == 'error') {
 			await this.root.RunAllTests();
 		} else {
 			await this.root.RunTest(...tests);
