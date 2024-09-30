@@ -100,12 +100,47 @@ export class CppUTestAdapter implements TestAdapter {
 	}
 
 	private async updateTests(): Promise<void> {
+		const preLaunchTask = await this.getPreLaunchTask();
+		if (preLaunchTask) {
+			const errorCode = await this.runTask(preLaunchTask);
+			if (errorCode) {
+				this.mainSuite.children = [];
+				this.testsEmitter.fire(<TestLoadFinishedEvent>{
+					type: 'finished',
+					errorMessage: `preLaunchTask "${preLaunchTask.name}" Failed [exit code: ${errorCode}]`,
+				});
+				return;
+			}
+		}
 		this.root.ClearTests();
 		const runners = this.settingsProvider.GetTestRunners().map(runner => new ExecutableRunner(this.processExecuter, runner, this.log, this.GetExecutionOptions()));
 		const loadedTests = await this.root.LoadTests(runners);
 		this.mainSuite.children = loadedTests;
 		this.testsEmitter.fire(<TestLoadFinishedEvent>{ type: 'finished', suite: this.mainSuite });
 	}
+
+	private async getPreLaunchTask(): Promise<vscode.Task | undefined> {
+		const preLaunchTaskName = this.settingsProvider.GetPreLaunchTask();
+		if (!preLaunchTaskName)
+			return undefined;
+		const tasks = await vscode.tasks.fetchTasks();
+		return tasks.find((value, ..._) => value.name == preLaunchTaskName);
+	}
+
+	private async runTask(task: vscode.Task): Promise<number> {
+		const taskProcessEnded: Promise<number> = new Promise((resolve, _) => {
+			const hook_disposable = vscode.tasks.onDidEndTaskProcess((e) => {
+				if (e.execution.task !== task)
+					return;
+				hook_disposable.dispose();
+				resolve(e.exitCode);
+			}, this, this.disposables)
+		});
+
+		await vscode.tasks.executeTask(task);
+		return await taskProcessEnded;
+	}
+
 	private GetExecutionOptions(): ExecutableRunnerOptions | undefined {
 		return {
 			objDumpExecutable: this.settingsProvider.GetObjDumpPath(),

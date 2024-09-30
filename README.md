@@ -19,6 +19,8 @@ To let this plugin know where your tests are set the ```cpputestTestAdapter.test
 ```
 They will be executed in the ```cpputestTestAdapter.testExecutablePath``` path.
 
+To arrange for a task to be run prior to running tests or refreshing the test list, set ```cpputestTestAdapter.preLaunchTask``` to the name of a task from tasks.json. This can be used to rebuild the test executable, for example.
+
 If you want to use the debugging functions you will also need to setup a launch.json file with your debugger path and arguments etc. The adapter will take care of the rest. Hopefully.
 
 

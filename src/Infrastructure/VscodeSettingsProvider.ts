@@ -33,6 +33,10 @@ export default class VscodeSettingsProvider implements SettingsProvider {
     return this.ResolveSettingsVariable(this.config.testExecutablePath);
   }
 
+  public GetPreLaunchTask(): string {
+    return this.config.preLaunchTask;
+  }
+
   public get TestLocationFetchMode(): TestLocationFetchMode {
     switch(this.config.testLocationFetchMode) {
       case 'test query':
