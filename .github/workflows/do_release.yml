@@ -22,7 +22,7 @@ jobs:
       - name: install gitversion tool
         uses: gittools/actions/gitversion/setup@v2.0.1
         with:
-            versionSpec: '6.x'
+            versionSpec: '5.x'
       
       - name: execute gitversion
         id: gitversion # step id used as reference for output values
