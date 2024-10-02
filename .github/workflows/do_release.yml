@@ -64,4 +64,18 @@ jobs:
           if-no-files-found: error
           path: ${{github.workspace}}/cpputest-test-adapter-${{steps.gitversion.outputs.semVer}}.vsix
 
-
+      - name: publish to marketplace
+        if: github.ref == 'refs/heads/master'
+        run: npm run publish-buildserver
+        env:
+            VSCE_PAT: ${{ secrets.VS_MARKETPLACE_TOKEN }}
+        
+      - name: create a release
+        if: github.ref == 'refs/heads/master'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.gitversion.outputs.semVer }}
+          release_name: v${{ steps.gitversion.outputs.semVer }}
+        

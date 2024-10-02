@@ -31,6 +31,7 @@
     "rebuild": "npm run clean && npm run build",
     "package": "npm run build && vsce package",
     "publish": "npm run rebuild && vsce publish",
+    "publish-buildserver": "vsce publish",
     "publish:patch": "npm run rebuild && vsce publish patch",
     "publish:pre": "npm run rebuild && vsce publish --pre-release"
   },
