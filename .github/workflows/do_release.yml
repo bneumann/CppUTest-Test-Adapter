@@ -14,39 +14,31 @@ jobs:
     name: Release package to Github page
     runs-on: ubuntu-latest
     steps:
-      - name: checkout repo
+      - name: Checkout repo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: install gitversion tool
+      - name: Install gitversion tool
         uses: gittools/actions/gitversion/setup@v2.0.1
         with:
             versionSpec: '5.x'
       
-      - name: execute gitversion
+      - name: Execute gitversion
         id: gitversion # step id used as reference for output values
         uses: gittools/actions/gitversion/execute@v2.0.1
         with:
           useConfigFile: true
-        
-      - name: print gitversion
-        run: |
-          echo "Major: ${{ steps.gitversion.outputs.major }}"
-          echo "Minor: ${{ steps.gitversion.outputs.minor }}"
-          echo "Patch: ${{ steps.gitversion.outputs.patch }}"
-          echo "MajorMinorPatch: ${{ steps.gitversion.outputs.majorMinorPatch }}"
-          echo "SemVer: ${{ steps.gitversion.outputs.semVer }}"
 
-      - name: setup node
+      - name: Setup node
         uses: actions/setup-node@v1
         with:
           node-version: '22.x'
         
-      - name: clean install dependencies
+      - name: Clean install dependencies
         run: npm ci
 
-      - name: update metadata in package.json
+      - name: Update metadata in package.json
         uses: onlyutkarsh/patch-files-action@v1.0.1
         with:
           files: '${{github.workspace}}/package.json'
@@ -55,14 +47,14 @@ jobs:
             = /displayName => "CppUTest Test Adapter"
             = /description => "Run your CppUTest tests in the Sidebar of Visual Studio Code"
       
-      - name: add version in CHANGELOG.md
+      - name: Add version in CHANGELOG.md
         uses: cschleiden/replace-tokens@v1.0
         with:
           files: '${{github.workspace}}/CHANGELOG.md'
         env:
           VERSION: "${{ steps.gitversion.outputs.semVer }}"
 
-      - name: compile and create vsix
+      - name: Compile and create vsix
         run: npm run package
 
       - name: upload vsix as artifact
