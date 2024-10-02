@@ -1,0 +1,17 @@
+name: Gitversion workflow
+
+on:
+  workflow_call:
+
+jobs:
+  reusable_workflow_job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: install gitversion tool
+        uses: gittools/actions/gitversion/setup@v0.9
+        with:
+          versionSpec: '5.1.x'
+      
+      - name: execute gitversion
+        id: gitversion # step id used as reference for output values
+        uses: gittools/actions/gitversion/execute@v0.9

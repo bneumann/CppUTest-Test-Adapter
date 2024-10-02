@@ -1,19 +1,81 @@
 name: Release
-on: [release]
+on:
+  push:
+    branches: 
+      - 'feat/**'
+      - 'fix/**'
+      - master
+    paths-ignore:
+      - '.vscode/**'
+
+
 jobs:
-  build:
-    name: 'Release package to marketplace'
+  cicd:
+    name: Release package to Github page
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - name: Checkout repo
+        uses: actions/checkout@v4
         with:
-          node-version: 16
-      - run: npm ci
-      - name: Publish to Visual Studio Marketplace
-        uses: HaaLeo/publish-vscode-extension@v1
-        with:
-          pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
-          registryUrl: https://marketplace.visualstudio.com
+          fetch-depth: 0
 
+      - name: Install gitversion tool
+        uses: gittools/actions/gitversion/setup@v2.0.1
+        with:
+            versionSpec: '5.x'
+      
+      - name: Execute gitversion
+        id: gitversion # step id used as reference for output values
+        uses: gittools/actions/gitversion/execute@v2.0.1
+        with:
+          useConfigFile: true
+
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+        
+      - name: Clean install dependencies
+        run: npm ci
+
+      - name: Update metadata in package.json
+        uses: onlyutkarsh/patch-files-action@v1.0.5
+        with:
+          files: '${{github.workspace}}/package.json'
+          patch-syntax: |
+            = /version => "${{ steps.gitversion.outputs.semVer }}"
+            = /displayName => "CppUTest Test Adapter"
+            = /description => "Run your CppUTest tests in the Sidebar of Visual Studio Code"
+      
+      - name: Add version in CHANGELOG.md
+        uses: cschleiden/replace-tokens@v1.3
+        with:
+          files: '${{github.workspace}}/CHANGELOG.md'
+        env:
+          VERSION: "${{ steps.gitversion.outputs.semVer }}"
+
+      - name: Compile and create vsix
+        run: npm run package
+
+      - name: upload vsix as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cpputest-test-adapter-${{steps.gitversion.outputs.semVer}}.vsix
+          if-no-files-found: error
+          path: ${{github.workspace}}/cpputest-test-adapter-${{steps.gitversion.outputs.semVer}}.vsix
+
+      - name: publish to marketplace
+        if: github.ref == 'refs/heads/master'
+        run: npm run publish-buildserver
+        env:
+            VSCE_PAT: ${{ secrets.VS_MARKETPLACE_TOKEN }}
+        
+      - name: create a release
+        if: github.ref == 'refs/heads/master'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.gitversion.outputs.semVer }}
+          release_name: v${{ steps.gitversion.outputs.semVer }}
+        

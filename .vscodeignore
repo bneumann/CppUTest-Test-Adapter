@@ -4,9 +4,13 @@ package-lock.json
 tsconfig.json
 .vscode/**
 .gitignore
+node_modules
+.devcontainer
+.github
 build
 build_linux
 bin
 CMakeLists.txt
 test
 tests
+GitVersion.yml
