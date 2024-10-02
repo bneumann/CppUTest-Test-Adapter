@@ -1,4 +1,4 @@
-name: Release to Github Page
+name: Release
 on:
   push:
     branches: 
@@ -11,7 +11,7 @@ on:
 
 jobs:
   cicd:
-    name: cicd
+    name: Releast package to Github page
     runs-on: windows-latest
     steps:
       - name: checkout repo
@@ -65,7 +65,7 @@ jobs:
         run: npm run package
 
       - name: upload vsix as artifact
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: cppu-test-adapter-${{steps.gitversion.outputs.semVer}}.vsix
           path: ${{github.workspace}}/vcppu-test-adapter-${{steps.gitversion.outputs.semVer}}.vsix
