@@ -15,10 +15,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: checkout repo
-        uses: actions/checkout@v2
-
-      - name: fetch all history and tags from all branches for gitversion
-        run: git fetch --prune --unshallow
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: install gitversion tool
         uses: gittools/actions/gitversion/setup@v3.0
