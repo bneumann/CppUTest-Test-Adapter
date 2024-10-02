@@ -3,9 +3,9 @@ import * as chaiAsPromised from "chai-as-promised";
 import ExecutableRunner, { RunResultStatus, RunResult } from '../src/Infrastructure/ExecutableRunner';
 import { ProcessExecuter } from '../src/Application/ProcessExecuter';
 import { anything, instance, mock, verify, when } from "ts-mockito";
-import { TestLocationFetchMode } from '../src/Infrastructure/SettingsProvider';
 import { ExecException } from "child_process";
 import { Log } from 'vscode-test-adapter-util';
+import { TestLocationFetchMode } from '../src/Infrastructure/Infrastructure';
 
 chaiUse(chaiAsPromised);
 

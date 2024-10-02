@@ -1,7 +1,7 @@
 import { ExecException } from "child_process";
 import { basename, dirname } from "path";
 import { ProcessExecuter } from "../Application/ProcessExecuter";
-import { TestLocationFetchMode } from "./SettingsProvider";
+import { TestLocationFetchMode } from './TestLocationFetchMode';
 import { Log } from "vscode-test-adapter-util";
 
 export enum RunResultStatus {

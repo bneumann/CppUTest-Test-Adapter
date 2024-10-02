@@ -5,11 +5,11 @@ import CppUTestContainer from "../src/Domain/CppUTestContainer";
 import { CppUTestGroup } from "../src/Domain/CppUTestGroup";
 import { TestSuiteInfo } from "vscode-test-adapter-api";
 import { TestResult } from "../src/Domain/TestResult";
-import { SettingsProvider, TestLocationFetchMode } from "../src/Infrastructure/SettingsProvider";
-import { VscodeAdapter } from "../src/Infrastructure/VscodeAdapter";
 import { DebugConfiguration, WorkspaceFolder } from "vscode";
 import { TestState } from "../src/Domain/TestState";
 import { ResultParser } from "../src/Domain/ResultParser";
+import { IDebugConfiguration, SettingsProvider, TestLocationFetchMode, VscodeAdapter } from "../src/Infrastructure/Infrastructure";
+import { CppUTest } from "../src/Domain/CppUTest";
 
 describe("CppUTestContainer should", () => {
   let mockRunner: ExecutableRunner;
@@ -254,7 +254,7 @@ describe("CppUTestContainer should", () => {
 
   it("start the debugger for the given test", async () => {
     const mockFolder = mock<WorkspaceFolder>();
-    const debugConfigSpy = <DebugConfiguration>{
+    const debugConfigSpy = <IDebugConfiguration>{
       name: "",
       request: "",
       type: ""
@@ -300,7 +300,7 @@ describe("CppUTestContainer should", () => {
 
   it("thrown an error if the debugger is started without config", async () => {
     mockSetting = mock<SettingsProvider>();
-    when(mockSetting.GetDebugConfiguration()).thenReturn("");
+    when(mockSetting.GetDebugConfiguration()).thenReturn(undefined);
     when(mockSetting.TestLocationFetchMode).thenReturn(TestLocationFetchMode.Disabled);
     const container = new CppUTestContainer(instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
 
@@ -326,8 +326,8 @@ describe("CppUTestContainer should", () => {
     const allTests = await container.LoadTests([instance(mockRunner)]);
 
     const testToRun = (allTests[0].children[0] as TestSuiteInfo).children[0];
-    let testOnStart = undefined;
-    let testOnFinish = undefined;
+    let testOnStart: CppUTest = new CppUTest("", "", "", undefined, undefined);
+    let testOnFinish: CppUTest = new CppUTest("", "", "", undefined, undefined);
     let testResultOnFinish: TestResult | undefined = undefined;
     container.OnTestStart = test => testOnStart = test;
     container.OnTestFinish = (test, result) => { testOnFinish = test; testResultOnFinish = result };
@@ -340,7 +340,7 @@ describe("CppUTestContainer should", () => {
   it("kill the process currently running", async () => {
     const mockRunner = createMockRunner("Exec1", TestLocationFetchMode.Disabled, "Group1.Test1 Group2.Test2", false);
     const container = new CppUTestContainer(instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
-    
+
     await container.LoadTests([instance(mockRunner)]);
 
     container.KillRunningProcesses();

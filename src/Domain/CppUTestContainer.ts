@@ -6,7 +6,8 @@ import { CppUTest } from "./CppUTest";
 import { TestState } from "./TestState";
 import { ResultParser } from "./ResultParser";
 import ExecutableRunner from "../Infrastructure/ExecutableRunner";
-import { SettingsProvider, TestLocationFetchMode } from "../Infrastructure/SettingsProvider";
+import { SettingsProvider } from "../Infrastructure/SettingsProvider";
+import { TestLocationFetchMode } from '../Infrastructure/TestLocationFetchMode';
 import { VscodeAdapter } from "../Infrastructure/VscodeAdapter";
 
 export default class CppUTestContainer {
@@ -99,7 +100,7 @@ export default class CppUTestContainer {
   public async DebugTest(...testId: string[]): Promise<void> {
     const config = this.settingsProvider.GetDebugConfiguration();
     const workspaceFolders = this.settingsProvider.GetWorkspaceFolders();
-    if (config === "") {
+    if (config === undefined) {
       throw new Error("No debug configuration found. Not able to debug!");
     }
     if (!workspaceFolders) {
@@ -112,11 +113,12 @@ export default class CppUTestContainer {
         const isTest = testOrGroup instanceof CppUTest;
         const testRunName = isTest ? `${testOrGroup.group}.${testOrGroup.label}` : `${testOrGroup.label}`;
         const testRunArg = isTest ? "-t" : "-sg";
-        (config as DebugConfiguration).name = testRunName;
-        (config as DebugConfiguration).args = [testRunArg, testRunName];
-        (config as DebugConfiguration).program = runner.Command;
-        (config as DebugConfiguration).target = runner.Command;
-        await this.vscodeAdapter.StartDebugger((workspaceFolders as WorkspaceFolder[]), config);
+        const debugConfig = config as unknown as DebugConfiguration;
+        debugConfig.name = testRunName;
+        debugConfig.args = [testRunArg, testRunName];
+        debugConfig.program = runner.Command;
+        debugConfig.target = runner.Command;
+        await this.vscodeAdapter.StartDebugger((workspaceFolders as WorkspaceFolder[]), debugConfig);
       }
     }
   }

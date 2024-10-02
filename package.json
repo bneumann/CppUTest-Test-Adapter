@@ -60,9 +60,6 @@
   "engines": {
     "vscode": "^1.63.0"
   },
-  "extensionDependencies": [
-    "hbenl.vscode-test-explorer"
-  ],
   "activationEvents": [
     "onStartupFinished"
   ],
