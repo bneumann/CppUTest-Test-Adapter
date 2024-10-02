@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import glob = require('glob');
 import { SettingsProvider } from './SettingsProvider';
 import { IWorkspaceConfiguration } from './IWorkspaceConfiguration';
 import { IDebugConfiguration } from './IDebugConfiguration';
@@ -7,15 +8,25 @@ import { IWorkspaceFolder } from './IWorkspaceFolder';
 
 
 export default class VscodeSettingsProvider extends SettingsProvider {
+  private configSection: string = "cpputestTestAdapter";
 
   constructor(log: Log) {
     super(log)
 
-    // vscode.workspace.onDidChangeConfiguration(event => {
-    //   if (event.affectsConfiguration(configSection)) {
-    //     this.config = vscode.workspace.getConfiguration(configSection);
-    //   }
-    // })
+    vscode.workspace.onDidChangeConfiguration(event => {
+      if (event.affectsConfiguration(this.configSection)) {
+        const wsConfig = vscode.workspace.getConfiguration(this.configSection);
+        this.config = {
+          debugLaunchConfigurationName: wsConfig["debugLaunchConfigurationName"],
+          logfile: wsConfig["logfile"],
+          logpanel: wsConfig["logpanel"],
+          objDumpExecutable: wsConfig["objDumpExecutable"],
+          testExecutable: wsConfig["testExecutable"],
+          testExecutablePath: wsConfig["testExecutablePath"],
+          testLocationFetchMode: wsConfig["testLocationFetchMode"]
+        }
+      }
+    })
   }
 
   protected override GetConfig(configSection: string): IWorkspaceConfiguration {
@@ -50,7 +61,7 @@ export default class VscodeSettingsProvider extends SettingsProvider {
     const hasConfiguredLaunchProfiles: boolean = this.config.debugLaunchConfigurationName !== undefined;
 
     if (wpLaunchConfigs && Array.isArray(wpLaunchConfigs) && wpLaunchConfigs.length > 0) {
-      if(hasConfiguredLaunchProfiles) {
+      if (hasConfiguredLaunchProfiles) {
         // try and match the config by name
         for (let i = 0; i < wpLaunchConfigs.length; ++i) {
           if (wpLaunchConfigs[i].name == this.config.debugLaunchConfigurationName) {
@@ -77,6 +88,10 @@ export default class VscodeSettingsProvider extends SettingsProvider {
     }
 
     return undefined;
+  }
+
+  protected GlobFiles(wildcardString: string): string[] {
+    return glob.sync(wildcardString)
   }
 
   protected override GetCurrentFilename(): string {

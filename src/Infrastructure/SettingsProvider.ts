@@ -1,4 +1,3 @@
-import glob = require('glob');
 import { Log } from 'vscode-test-adapter-util';
 import { IWorkspaceFolder } from './IWorkspaceFolder';
 import { IDebugConfiguration } from './IDebugConfiguration';
@@ -25,6 +24,7 @@ export abstract class SettingsProvider {
   abstract GetWorkspaceFolders(): readonly IWorkspaceFolder[] | undefined
   protected abstract GetCurrentFilename(): string
   protected abstract GetCurrentWorkspaceFolder(): string
+  protected abstract GlobFiles(wildcardString: string): string[]
 
   public get TestLocationFetchMode(): TestLocationFetchMode {
     switch (this.config.testLocationFetchMode) {
@@ -55,12 +55,12 @@ export abstract class SettingsProvider {
   protected SplitRunners(executablesString: string | undefined): string[] {
     if (executablesString) {
       if (executablesString.indexOf(";") === -1) {
-        return [this.ResolveSettingsVariable(executablesString)];
+        return this.GlobFiles(this.ResolveSettingsVariable(executablesString));
       }
       return executablesString
         .split(";")
         .map(r => this.ResolveSettingsVariable(r))
-        .map(r => glob.sync(r))
+        .map(r => this.GlobFiles(r))
         .reduce((flatten, arr) => [...flatten, ...arr]);
     } else {
       return [];
