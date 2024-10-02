@@ -136,7 +136,7 @@ export class CppUTestAdapter implements TestAdapter {
 				if (e.execution.task !== task)
 					return;
 				hook_disposable.dispose();
-				resolve(e.exitCode);
+				resolve(e.exitCode ?? 0);
 			}, this, this.disposables)
 		});
 
