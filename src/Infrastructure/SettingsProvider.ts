@@ -5,7 +5,6 @@ import { IWorkspaceConfiguration } from './IWorkspaceConfiguration';
 import { TestLocationFetchMode } from './TestLocationFetchMode';
 
 export abstract class SettingsProvider {
-
   protected log: Log;
   protected config: IWorkspaceConfiguration;
 
@@ -17,11 +16,12 @@ export abstract class SettingsProvider {
   }
 
   protected abstract GetConfig(section: string): IWorkspaceConfiguration;
-  abstract GetObjDumpPath(): string;
-  abstract GetTestRunners(): string[];
-  abstract GetTestPath(): string;
-  abstract GetDebugConfiguration(): (IDebugConfiguration | undefined);
-  abstract GetWorkspaceFolders(): readonly IWorkspaceFolder[] | undefined
+  public abstract GetObjDumpPath(): string;
+  public abstract GetTestRunners(): string[];
+  public abstract GetTestPath(): string;
+  public abstract GetPreLaunchTask(): string;
+  public abstract GetDebugConfiguration(): (IDebugConfiguration | undefined);
+  public abstract GetWorkspaceFolders(): readonly IWorkspaceFolder[] | undefined
   protected abstract GetCurrentFilename(): string
   protected abstract GetCurrentWorkspaceFolder(): string
   protected abstract GlobFiles(wildcardString: string): string[]

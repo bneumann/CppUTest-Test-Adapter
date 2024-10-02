@@ -7,4 +7,5 @@ export interface IWorkspaceConfiguration {
   logpanel: boolean;
   debugLaunchConfigurationName: string | undefined;
   objDumpExecutable: string | undefined;
+  preLaunchTask: string;
 }

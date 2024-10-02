@@ -17,6 +17,10 @@ class TestSettingsProvider extends SettingsProvider {
     protected GetConfig(section: string): IWorkspaceConfiguration {
         return this.config;
     }
+    
+    public GetPreLaunchTask(): string {
+        return this.config.preLaunchTask;
+    }
 
     GetObjDumpPath(): string {
         return this.config.objDumpExecutable ?? "";
@@ -61,14 +65,15 @@ class TestSettingsProvider extends SettingsProvider {
 }
 
 describe("SettingsProvider should", () => {
-    const config = {
+    const config: IWorkspaceConfiguration = {
         debugLaunchConfigurationName: "",
         objDumpExecutable: "",
         logfile: "",
         logpanel: false,
         testExecutable: "",
         testExecutablePath: "",
-        testLocationFetchMode: ""
+        testLocationFetchMode: "",
+        preLaunchTask: ""
     };
     let filesToFind = [""];
 

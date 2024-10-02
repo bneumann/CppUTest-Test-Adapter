@@ -23,7 +23,8 @@ export default class VscodeSettingsProvider extends SettingsProvider {
           objDumpExecutable: wsConfig["objDumpExecutable"],
           testExecutable: wsConfig["testExecutable"],
           testExecutablePath: wsConfig["testExecutablePath"],
-          testLocationFetchMode: wsConfig["testLocationFetchMode"]
+          testLocationFetchMode: wsConfig["testLocationFetchMode"],
+          preLaunchTask: wsConfig["preLaunchTask"]
         }
       }
     })
@@ -32,6 +33,10 @@ export default class VscodeSettingsProvider extends SettingsProvider {
   protected override GetConfig(configSection: string): IWorkspaceConfiguration {
     return (vscode.workspace.getConfiguration(configSection) as any);
   }
+
+  public override GetPreLaunchTask(): string {
+      return this.config.preLaunchTask;
+    }
 
   GetObjDumpPath(): string {
     return this.ResolveSettingsVariable(this.config.objDumpExecutable);
