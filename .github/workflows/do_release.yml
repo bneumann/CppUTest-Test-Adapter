@@ -31,7 +31,7 @@ jobs:
           useConfigFile: true
 
       - name: Setup node
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v4
         with:
           node-version: '22.x'
         
@@ -39,7 +39,7 @@ jobs:
         run: npm ci
 
       - name: Update metadata in package.json
-        uses: onlyutkarsh/patch-files-action@v1.0.1
+        uses: onlyutkarsh/patch-files-action@v1.0.5
         with:
           files: '${{github.workspace}}/package.json'
           patch-syntax: |
@@ -48,7 +48,7 @@ jobs:
             = /description => "Run your CppUTest tests in the Sidebar of Visual Studio Code"
       
       - name: Add version in CHANGELOG.md
-        uses: cschleiden/replace-tokens@v1.0
+        uses: cschleiden/replace-tokens@v1.3
         with:
           files: '${{github.workspace}}/CHANGELOG.md'
         env:
