@@ -11,8 +11,8 @@ on:
 
 jobs:
   cicd:
-    name: Releast package to Github page
-    runs-on: windows-latest
+    name: Release package to Github page
+    runs-on: ubuntu-latest
     steps:
       - name: checkout repo
         uses: actions/checkout@v2
@@ -21,13 +21,13 @@ jobs:
         run: git fetch --prune --unshallow
 
       - name: install gitversion tool
-        uses: gittools/actions/gitversion/setup@v0.9
+        uses: gittools/actions/gitversion/setup@v3.0
         with:
-            versionSpec: '5.1.x'
+            versionSpec: '6.x'
       
       - name: execute gitversion
         id: gitversion # step id used as reference for output values
-        uses: gittools/actions/gitversion/execute@v0.9
+        uses: gittools/actions/gitversion/execute@v3.0
         
       - name: print gitversion
         run: |
