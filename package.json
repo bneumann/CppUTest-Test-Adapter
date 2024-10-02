@@ -29,7 +29,7 @@
     "watch": "tsc -w",
     "test": "mocha --require ts-node/register **/*.spec.ts",
     "rebuild": "npm run clean && npm run build",
-    "package": "vsce package",
+    "package": "npm run build && vsce package",
     "publish": "npm run rebuild && vsce publish",
     "publish:patch": "npm run rebuild && vsce publish patch",
     "publish:pre": "npm run rebuild && vsce publish --pre-release"
