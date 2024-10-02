@@ -83,6 +83,12 @@
           "type": "string",
           "scope": "resource"
         },
+        "cpputestTestAdapter.preLaunchTask": {
+          "description": "Task to run before running the test executable",
+          "default": "",
+          "type": "string",
+          "scope": "resource"
+        },
         "cpputestTestAdapter.testLocationFetchMode": {
           "description": "",
           "default": "auto",

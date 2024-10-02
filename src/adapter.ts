@@ -71,19 +71,21 @@ export class CppUTestAdapter implements TestAdapter {
 	public async run(tests: string[]): Promise<void> {
 		this.testStatesEmitter.fire(<TestRunStartedEvent>{ type: 'started', tests });
 		this.log.info('Running tests');
-		await this.updateTests();
-		if (tests.length == 1 && tests[0] == this.mainSuite.id) {
-			await this.root.RunAllTests();
-		} else {
-			await this.root.RunTest(...tests);
+		if (await this.updateTests())
+		{
+			if (tests.length == 1 && tests[0] == this.mainSuite.id || tests[0] == 'error') {
+				await this.root.RunAllTests();
+			} else {
+				await this.root.RunTest(...tests);
+			}
 		}
 		this.log.info('Done');
 		this.testStatesEmitter.fire(<TestRunFinishedEvent>{ type: 'finished' });
 	}
 
 	public async debug(tests: string[]): Promise<void> {
-		await this.updateTests();
-		return this.root.DebugTest(...tests);
+		if (await this.updateTests())
+			return this.root.DebugTest(...tests);
 	}
 
 	public cancel(): void {
@@ -99,13 +101,49 @@ export class CppUTestAdapter implements TestAdapter {
 		this.disposables = [];
 	}
 
-	private async updateTests(): Promise<void> {
+	private async updateTests(): Promise<boolean> {
+		const preLaunchTask = await this.getPreLaunchTask();
+		if (preLaunchTask) {
+			const errorCode = await this.runTask(preLaunchTask);
+			if (errorCode) {
+				this.mainSuite.children = [];
+				this.testsEmitter.fire(<TestLoadFinishedEvent>{
+					type: 'finished',
+					errorMessage: `preLaunchTask "${preLaunchTask.name}" Failed [exit code: ${errorCode}]`,
+				});
+				return false;
+			}
+		}
 		this.root.ClearTests();
 		const runners = this.settingsProvider.GetTestRunners().map(runner => new ExecutableRunner(this.processExecuter, runner, this.log, this.GetExecutionOptions()));
 		const loadedTests = await this.root.LoadTests(runners);
 		this.mainSuite.children = loadedTests;
 		this.testsEmitter.fire(<TestLoadFinishedEvent>{ type: 'finished', suite: this.mainSuite });
+		return true;
 	}
+
+	private async getPreLaunchTask(): Promise<vscode.Task | undefined> {
+		const preLaunchTaskName = this.settingsProvider.GetPreLaunchTask();
+		if (!preLaunchTaskName)
+			return undefined;
+		const tasks = await vscode.tasks.fetchTasks();
+		return tasks.find((value, ..._) => value.name == preLaunchTaskName);
+	}
+
+	private async runTask(task: vscode.Task): Promise<number> {
+		const taskProcessEnded: Promise<number> = new Promise((resolve, _) => {
+			const hook_disposable = vscode.tasks.onDidEndTaskProcess((e) => {
+				if (e.execution.task !== task)
+					return;
+				hook_disposable.dispose();
+				resolve(e.exitCode);
+			}, this, this.disposables)
+		});
+
+		await vscode.tasks.executeTask(task);
+		return await taskProcessEnded;
+	}
+
 	private GetExecutionOptions(): ExecutableRunnerOptions | undefined {
 		return {
 			objDumpExecutable: this.settingsProvider.GetObjDumpPath(),

@@ -11,6 +11,7 @@ export interface SettingsProvider {
   GetObjDumpPath(): string;
   GetTestRunners(): string[];
   GetTestPath(): string;
+  GetPreLaunchTask(): string;
   get TestLocationFetchMode(): TestLocationFetchMode;
   GetDebugConfiguration(): (DebugConfiguration | string);
   GetWorkspaceFolders(): readonly WorkspaceFolder[] | undefined
