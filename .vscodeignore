@@ -5,7 +5,6 @@ tsconfig.json
 .vscode/**
 .gitignore
 node_modules
-img
 .devcontainer
 .github
 build
