@@ -39,7 +39,7 @@ class ExecError implements ExecException {
   cmd?: string;
   killed?: boolean;
   code?: number;
-  signal?: string;
+  signal?: NodeJS.Signals;
   constructor(code?: number) {
     this.code = code;
   }

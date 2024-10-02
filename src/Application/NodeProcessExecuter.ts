@@ -1,7 +1,7 @@
 import { ProcessExecuter } from "./ProcessExecuter";
-import { exec, execFile, ChildProcess, ExecException } from "child_process";
+import { exec, execFile, ChildProcess, ExecFileException } from "child_process";
 
-type execCallbackType = (error: ExecException | null, stdout: string | Buffer, stderr: string | Buffer) => void;
+type execCallbackType = (error: ExecFileException | null, stdout: string | Buffer, stderr: string | Buffer) => void;
 
 export class NodeProcessExecuter implements ProcessExecuter {
     public readonly Exec: Function;
