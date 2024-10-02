@@ -3,6 +3,7 @@ on:
   push:
     branches: 
       - 'feat/**'
+      - 'fix/**'
       - master
     paths-ignore:
       - '.vscode/**'
