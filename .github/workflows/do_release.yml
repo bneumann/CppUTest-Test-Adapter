@@ -60,7 +60,8 @@ jobs:
       - name: upload vsix as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: cppu-test-adapter-${{steps.gitversion.outputs.semVer}}.vsix
-          path: ${{github.workspace}}/cppu-test-adapter-${{steps.gitversion.outputs.semVer}}.vsix
+          name: cpputest-test-adapter-${{steps.gitversion.outputs.semVer}}.vsix
+          if-no-files-found: error
+          path: ${{github.workspace}}/cpputest-test-adapter-${{steps.gitversion.outputs.semVer}}.vsix
 
 
