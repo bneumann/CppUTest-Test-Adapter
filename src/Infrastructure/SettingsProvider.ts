@@ -41,12 +41,9 @@ export abstract class SettingsProvider {
   }
 
   protected IsCCppDebugger(config: any) {
-    const isWin = process.platform === "win32";
     // This is my way of saying: If we are using windows check for a config that has an .exe program.
-    const executionExtension: boolean = isWin ? config.program.endsWith(".exe") : true;
     return config.request == 'launch' &&
       typeof config.type == 'string' &&
-      executionExtension &&
       (config.type.startsWith('cpp') ||
         config.type.startsWith('lldb') ||
         config.type.startsWith('gdb'));
