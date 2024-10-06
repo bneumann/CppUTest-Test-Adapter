@@ -2,3 +2,4 @@ node_modules/
 out/
 build*
 HowTo.md
+*.vsix
