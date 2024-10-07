@@ -25,7 +25,7 @@
   "main": "out/main.js",
   "scripts": {
     "clean": "rimraf out *.vsix",
-    "build": "tsc",
+    "build": "node esbuild.js",
     "watch": "tsc -w",
     "test": "mocha --require ts-node/register **/*.spec.ts",
     "rebuild": "npm run clean && npm run build",
@@ -43,21 +43,22 @@
     "xml2js": "^0.5.0"
   },
   "devDependencies": {
-    "@types/xml2js": "^0.4.9",
     "@types/chai": "^4.2.22",
     "@types/chai-as-promised": "^7.1.4",
     "@types/glob": "^7.1.4",
     "@types/mocha": "^9.1.1",
-    "@types/vscode": "~1.61.0",
     "@types/node": "^22.7.4",
+    "@types/vscode": "~1.61.0",
+    "@types/xml2js": "^0.4.9",
+    "@vscode/vsce": "^3.1.1",
     "chai": "^4.3.4",
     "chai-as-promised": "^7.1.1",
+    "esbuild": "^0.24.0",
     "mocha": "^9.2.2",
     "rimraf": "^3.0.2",
     "ts-mockito": "^2.6.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5.4.5",
-    "@vscode/vsce": "^3.1.1"
+    "typescript": "^5.4.5"
   },
   "engines": {
     "vscode": "^1.63.0"
