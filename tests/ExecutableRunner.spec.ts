@@ -164,6 +164,70 @@ describe("ExecutableRunner should", () => {
     runner.KillProcess();
     verify(mockedExecuter.KillProcess()).called();
   })
+
+  describe("workingDirectory option", () => {
+    it("should use provided workingDirectory option", async () => {
+      const log = mock<Log>();
+      const mockedExecuter = mock<ProcessExecuter>();
+      const customWorkingDir = "/custom/working/directory";
+      let capturedOptions: any;
+
+      when(mockedExecuter.ExecFile(anything(), anything(), anything(), anything()))
+        .thenCall((cmd: string, args: any, options: any, callback: Function) => {
+          capturedOptions = options;
+          callback(undefined, "output", "");
+        });
+
+      const executer = instance(mockedExecuter);
+      const runner = new ExecutableRunner(executer, "/path/to/test.exe", log, 
+        { workingDirectory: customWorkingDir });
+
+      await runner.GetTestList(TestLocationFetchMode.Disabled);
+
+      expect(capturedOptions.cwd).to.equal(customWorkingDir);
+    });
+
+    it("should use executable directory when workingDirectory not provided", async () => {
+      const log = mock<Log>();
+      const mockedExecuter = mock<ProcessExecuter>();
+      const executablePath = "/path/to/test.exe";
+      let capturedOptions: any;
+
+      when(mockedExecuter.ExecFile(anything(), anything(), anything(), anything()))
+        .thenCall((cmd: string, args: any, options: any, callback: Function) => {
+          capturedOptions = options;
+          callback(undefined, "output", "");
+        });
+
+      const executer = instance(mockedExecuter);
+      const runner = new ExecutableRunner(executer, executablePath, log);
+
+      await runner.GetTestList(TestLocationFetchMode.Disabled);
+
+      expect(capturedOptions.cwd).to.equal("/path/to");
+    });
+
+    it("should use workingDirectory for test execution", async () => {
+      const log = mock<Log>();
+      const mockedExecuter = mock<ProcessExecuter>();
+      const customWorkingDir = "/custom/test/directory";
+      let capturedOptions: any;
+
+      when(mockedExecuter.ExecFile(anything(), anything(), anything(), anything()))
+        .thenCall((cmd: string, args: any, options: any, callback: Function) => {
+          capturedOptions = options;
+          callback(undefined, ".", "");
+        });
+
+      const executer = instance(mockedExecuter);
+      const runner = new ExecutableRunner(executer, "/path/to/test.exe", log, 
+        { workingDirectory: customWorkingDir });
+
+      await runner.RunTest("TestGroup", "TestName");
+
+      expect(capturedOptions.cwd).to.equal(customWorkingDir);
+    });
+  });
 })
 
 function setupMockCalls(error: ExecException | undefined, returnValue: string, errorValue: string) {
