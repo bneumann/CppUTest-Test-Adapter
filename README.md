@@ -27,12 +27,12 @@ To enable debugging and troubleshooting, configure the logging options:
 ```json
 {
   "cpputestTestAdapter.logpanel": true,
-  "cpputestTestAdapter.logfile": "${workspaceFolder}/logs/cpputest-adapter.log"
+  "cpputestTestAdapter.logfile": "C:/temp/cpputest-adapter.log"
 }
 ```
 
 - ```logpanel```: Shows logs in VSCode's Output panel ("CppUTest Test Adapter Log")
-- ```logfile```: Saves logs to a file. Recommended extensions: ```.log```, ```.txt```
+- ```logfile```: Saves logs to a file. Use absolute paths (variables like ```${workspaceFolder}``` are not supported). Create the directory beforehand if it doesn't exist.
 
 If you want to use the debugging functions you will also need to setup a launch.json file with your debugger path and arguments etc. The adapter will take care of the rest. Hopefully.
 
