@@ -254,11 +254,11 @@ describe("CppUTestContainer should", () => {
 
   it("start the debugger for the given test", async () => {
     const mockFolder = mock<WorkspaceFolder>();
-    const debugConfigSpy = <IDebugConfiguration>{
+    const debugConfigSpy = {
       name: "",
       request: "",
       type: ""
-    };
+    } as IDebugConfiguration;
     when(mockSetting.GetWorkspaceFolders()).thenReturn([instance(mockFolder)]);
     when(mockSetting.GetDebugConfiguration()).thenReturn(debugConfigSpy);
     when(mockRunner.Command).thenReturn("myProgram");
@@ -277,11 +277,11 @@ describe("CppUTestContainer should", () => {
 
   it("start the debugger for a given test group", async () => {
     const mockFolder = mock<WorkspaceFolder>();
-    const debugConfigSpy = <DebugConfiguration>{
+    const debugConfigSpy = {
       name: "",
       request: "",
       type: ""
-    };
+    } as DebugConfiguration;
     when(mockSetting.GetWorkspaceFolders()).thenReturn([instance(mockFolder)]);
     when(mockSetting.GetDebugConfiguration()).thenReturn(debugConfigSpy);
     when(mockRunner.Command).thenReturn("myProgram");
