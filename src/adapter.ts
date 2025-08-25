@@ -148,7 +148,7 @@ export class CppUTestAdapter implements TestAdapter {
 		const testPath = this.settingsProvider.GetTestPath();
 		return {
 			objDumpExecutable: this.settingsProvider.GetObjDumpPath(),
-			workingDirectory: testPath || undefined
+			workingDirectory: testPath
 		}
 	}
 
