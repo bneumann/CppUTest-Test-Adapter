@@ -135,4 +135,37 @@ describe("SettingsProvider should", () => {
         const actualPath = settingsProvider.GetTestRunners()
         expect(actualPath).to.have.members(expectedPath);
     })
+
+    describe("testExecutablePath variable resolution", () => {
+        it("should resolve ${workspaceFolder} in testExecutablePath", () => {
+            const logger = mock<Log>();
+            config.testExecutablePath = "${workspaceFolder}/test";
+            const expectedPath = "myFolder/test";
+
+            const settingsProvider = new TestSettingsProvider(logger, config, filesToFind);
+
+            const actualPath = settingsProvider.GetTestPath();
+            expect(actualPath).to.equal(expectedPath);
+        });
+
+        it("should return empty string when testExecutablePath is empty", () => {
+            const logger = mock<Log>();
+            config.testExecutablePath = "";
+
+            const settingsProvider = new TestSettingsProvider(logger, config, filesToFind);
+
+            const actualPath = settingsProvider.GetTestPath();
+            expect(actualPath).to.equal("");
+        });
+
+        it("should return string as-is when no variables present", () => {
+            const logger = mock<Log>();
+            config.testExecutablePath = "/absolute/path/test";
+
+            const settingsProvider = new TestSettingsProvider(logger, config, filesToFind);
+
+            const actualPath = settingsProvider.GetTestPath();
+            expect(actualPath).to.equal("/absolute/path/test");
+        });
+    });
 });
