@@ -9,9 +9,9 @@
       "args": [
         "--extensionDevelopmentPath=${workspaceFolder}"
       ],
-      "preLaunchTask": "tsc: build - tsconfig.json",
+      "preLaunchTask": "npm: build",
       "outFiles": [
-        "${workspaceFolder}/out"
+        "${workspaceFolder}/out/**/*.js"
       ]
     }
   ]

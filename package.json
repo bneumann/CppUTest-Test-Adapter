@@ -27,6 +27,7 @@
     "clean": "rimraf out *.vsix",
     "build": "node esbuild.js",
     "watch": "tsc -w",
+    "dev": "node esbuild.js --watch",
     "test": "mocha --require ts-node/register **/*.spec.ts",
     "rebuild": "npm run clean && npm run build",
     "package": "npm run build && vsce package",
