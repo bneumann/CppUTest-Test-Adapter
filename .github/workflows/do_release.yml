@@ -65,12 +65,14 @@ jobs:
           path: ${{github.workspace}}/cpputest-test-adapter-${{steps.gitversion.outputs.semVer}}.vsix
 
       - name: Publish to Open VSX Registry
+        if: github.ref == 'refs/heads/master'
         uses: HaaLeo/publish-vscode-extension@v2
         id: publishToOpenVSX
         with:
           pat: ${{ secrets.OPEN_VSX_TOKEN }}
 
       - name: Publish to Visual Studio Marketplace
+        if: github.ref == 'refs/heads/master'
         uses: HaaLeo/publish-vscode-extension@v2
         with:
           pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
