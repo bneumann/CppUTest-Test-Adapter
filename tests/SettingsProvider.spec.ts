@@ -168,4 +168,106 @@ describe("SettingsProvider should", () => {
             expect(actualPath).to.equal("/absolute/path/test");
         });
     });
+
+    describe("Enhanced workingDirectory logic with whitespace handling", () => {
+        const logger = mock<Log>();
+        const testCommand = "/path/to/test/executable";
+        const expectedDirname = "/path/to/test";
+        const mockProcessExecuter = {
+            Exec: () => {},
+            ExecFile: () => {},
+            KillProcess: () => {}
+        };
+
+        it("should use dirname(command) when workingDirectory is empty string", () => {
+            const options = { workingDirectory: "" };
+            const runner = new (require('../src/Infrastructure/ExecutableRunner').default)(
+                mockProcessExecuter, testCommand, logger, options
+            );
+            
+            const workingDir = (runner as any).workingDirectory;
+            expect(workingDir).to.equal(expectedDirname);
+        });
+
+        it("should use dirname(command) when workingDirectory is whitespace only", () => {
+            const whitespaceOnlyCases = ["   ", "\t", "\n", " \t \n ", "\t\t"];
+            
+            whitespaceOnlyCases.forEach(whitespace => {
+                const options = { workingDirectory: whitespace };
+                const runner = new (require('../src/Infrastructure/ExecutableRunner').default)(
+                    mockProcessExecuter, testCommand, logger, options
+                );
+                
+                const workingDir = (runner as any).workingDirectory;
+                expect(workingDir).to.equal(expectedDirname, 
+                    `Failed for whitespace: "${whitespace}"`);
+            });
+        });
+
+        it("should use dirname(command) when workingDirectory is undefined", () => {
+            const options = { workingDirectory: undefined };
+            const runner = new (require('../src/Infrastructure/ExecutableRunner').default)(
+                mockProcessExecuter, testCommand, logger, options
+            );
+            
+            const workingDir = (runner as any).workingDirectory;
+            expect(workingDir).to.equal(expectedDirname);
+        });
+
+        it("should use dirname(command) when workingDirectory is null", () => {
+            const options = { workingDirectory: null as any };
+            const runner = new (require('../src/Infrastructure/ExecutableRunner').default)(
+                mockProcessExecuter, testCommand, logger, options
+            );
+            
+            const workingDir = (runner as any).workingDirectory;
+            expect(workingDir).to.equal(expectedDirname);
+        });
+
+        it("should use dirname(command) when options is undefined", () => {
+            const runner = new (require('../src/Infrastructure/ExecutableRunner').default)(
+                mockProcessExecuter, testCommand, logger, undefined
+            );
+            
+            const workingDir = (runner as any).workingDirectory;
+            expect(workingDir).to.equal(expectedDirname);
+        });
+
+        it("should preserve valid workingDirectory and trim whitespace", () => {
+            const validPath = "/custom/working/directory";
+            const pathWithWhitespace = `  ${validPath}  `;
+            
+            const options = { workingDirectory: pathWithWhitespace };
+            const runner = new (require('../src/Infrastructure/ExecutableRunner').default)(
+                mockProcessExecuter, testCommand, logger, options
+            );
+            
+            const workingDir = (runner as any).workingDirectory;
+            expect(workingDir).to.equal(validPath); // Should be trimmed
+        });
+
+        it("should preserve valid workingDirectory without whitespace", () => {
+            const validPath = "/custom/working/directory";
+            
+            const options = { workingDirectory: validPath };
+            const runner = new (require('../src/Infrastructure/ExecutableRunner').default)(
+                mockProcessExecuter, testCommand, logger, options
+            );
+            
+            const workingDir = (runner as any).workingDirectory;
+            expect(workingDir).to.equal(validPath);
+        });
+
+        it("should handle relative paths correctly", () => {
+            const relativePath = "./relative/path";
+            
+            const options = { workingDirectory: relativePath };
+            const runner = new (require('../src/Infrastructure/ExecutableRunner').default)(
+                mockProcessExecuter, testCommand, logger, options
+            );
+            
+            const workingDir = (runner as any).workingDirectory;
+            expect(workingDir).to.equal(relativePath);
+        });
+    });
 });

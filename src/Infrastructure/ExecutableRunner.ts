@@ -42,7 +42,13 @@ export default class ExecutableRunner {
     this.execFile = processExecuter.ExecFile;
     this.kill = processExecuter.KillProcess;
     this.command = command;
-    this.workingDirectory = options?.workingDirectory ?? dirname(command);
+
+    
+    
+    const wd = options?.workingDirectory;
+    this.workingDirectory =
+      (typeof wd === 'string' && wd.trim() !== '') ? wd.trim() : dirname(command);
+
     this.objDumpExecutable = options?.objDumpExecutable ?? "objdump";
     this.Name = basename(command);
     this.tempFile = `${this.Name}.dump`
