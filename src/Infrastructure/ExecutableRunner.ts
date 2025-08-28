@@ -46,8 +46,7 @@ export default class ExecutableRunner {
     
     
     const wd = options?.workingDirectory;
-    this.workingDirectory =
-      (typeof wd === 'string' && wd.trim() !== '') ? wd.trim() : dirname(command);
+    this.workingDirectory = this.isEmptyString(wd) ? dirname(command) : wd!.trim();
 
     this.objDumpExecutable = options?.objDumpExecutable ?? "objdump";
     this.Name = basename(command);
@@ -160,5 +159,9 @@ export default class ExecutableRunner {
 
   public KillProcess() {
     this.kill();
+  }
+
+  private isEmptyString(value: string | undefined | null): boolean {
+    return typeof value !== 'string' || value.trim() === '';
   }
 }
