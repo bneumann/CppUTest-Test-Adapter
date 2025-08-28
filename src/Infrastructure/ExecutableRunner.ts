@@ -58,6 +58,8 @@ export default class ExecutableRunner {
   }
 
   public get Command(): string { return this.command; }
+  
+  public get WorkingDirectory(): string { return this.workingDirectory; }
 
   public GetTestList(testLocationFetchMode: TestLocationFetchMode): Promise<[string, boolean]> {
 

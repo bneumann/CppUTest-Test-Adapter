@@ -198,7 +198,7 @@ describe("SettingsProvider should", () => {
                     mockProcessExecuter, testCommand, logger, options
                 );
                 
-                const workingDir = (runner as any).workingDirectory;
+                const workingDir = runner.WorkingDirectory;
                 expect(workingDir).to.equal(expectedDirname, 
                     `Failed for whitespace: "${whitespace}"`);
             });
@@ -210,7 +210,7 @@ describe("SettingsProvider should", () => {
                 mockProcessExecuter, testCommand, logger, options
             );
             
-            const workingDir = (runner as any).workingDirectory;
+            const workingDir = runner.WorkingDirectory;
             expect(workingDir).to.equal(expectedDirname);
         });
 
@@ -220,7 +220,7 @@ describe("SettingsProvider should", () => {
                 mockProcessExecuter, testCommand, logger, options
             );
             
-            const workingDir = (runner as any).workingDirectory;
+            const workingDir = runner.WorkingDirectory;
             expect(workingDir).to.equal(expectedDirname);
         });
 
@@ -229,7 +229,7 @@ describe("SettingsProvider should", () => {
                 mockProcessExecuter, testCommand, logger, undefined
             );
             
-            const workingDir = (runner as any).workingDirectory;
+            const workingDir = runner.WorkingDirectory;
             expect(workingDir).to.equal(expectedDirname);
         });
 
@@ -242,7 +242,7 @@ describe("SettingsProvider should", () => {
                 mockProcessExecuter, testCommand, logger, options
             );
             
-            const workingDir = (runner as any).workingDirectory;
+            const workingDir = runner.WorkingDirectory;
             expect(workingDir).to.equal(validPath); // Should be trimmed
         });
 
@@ -254,7 +254,7 @@ describe("SettingsProvider should", () => {
                 mockProcessExecuter, testCommand, logger, options
             );
             
-            const workingDir = (runner as any).workingDirectory;
+            const workingDir = runner.WorkingDirectory;
             expect(workingDir).to.equal(validPath);
         });
 
@@ -266,7 +266,7 @@ describe("SettingsProvider should", () => {
                 mockProcessExecuter, testCommand, logger, options
             );
             
-            const workingDir = (runner as any).workingDirectory;
+            const workingDir = runner.WorkingDirectory;
             expect(workingDir).to.equal(relativePath);
         });
     });
