@@ -19,8 +19,8 @@ To let this plugin know where your tests are set the ```cpputestTestAdapter.test
 ```
 
 Both settings support the ```${workspaceFolder}``` variable. The ```testExecutablePath``` determines the working directory:
-- If set, all test executables will be run from this directory
-- If not set, each test executable will be run from its own directory (the directory containing the executable)
+- If set to a valid directory path, all test executables will be run from this directory
+- If not set or set to an empty string, each test executable will be run from its own directory (the directory containing the executable)
 
 To arrange for a task to be run prior to running tests or refreshing the test list, set ```cpputestTestAdapter.preLaunchTask``` to the name of a task from tasks.json. This can be used to rebuild the test executable, for example.
 

@@ -42,6 +42,8 @@ export default class ExecutableRunner {
     this.execFile = processExecuter.ExecFile;
     this.kill = processExecuter.KillProcess;
     this.command = command;
+
+    
     
     const wd = options?.workingDirectory;
     this.workingDirectory =
