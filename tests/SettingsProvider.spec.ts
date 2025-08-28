@@ -2,6 +2,7 @@ import { mock } from "ts-mockito";
 import { IDebugConfiguration, IWorkspaceConfiguration, IWorkspaceFolder, SettingsProvider } from '../src/Infrastructure/Infrastructure';
 import { Log } from 'vscode-test-adapter-util';
 import { expect } from "chai";
+import ExecutableRunner from '../src/Infrastructure/ExecutableRunner';
 
 
 class TestSettingsProvider extends SettingsProvider {
@@ -181,11 +182,11 @@ describe("SettingsProvider should", () => {
 
         it("should use dirname(command) when workingDirectory is empty string", () => {
             const options = { workingDirectory: "" };
-            const runner = new (require('../src/Infrastructure/ExecutableRunner').default)(
+            const runner = new ExecutableRunner(
                 mockProcessExecuter, testCommand, logger, options
             );
             
-            const workingDir = (runner as any).workingDirectory;
+            const workingDir = runner.WorkingDirectory;
             expect(workingDir).to.equal(expectedDirname);
         });
 
@@ -194,7 +195,7 @@ describe("SettingsProvider should", () => {
             
             whitespaceOnlyCases.forEach(whitespace => {
                 const options = { workingDirectory: whitespace };
-                const runner = new (require('../src/Infrastructure/ExecutableRunner').default)(
+                const runner = new ExecutableRunner(
                     mockProcessExecuter, testCommand, logger, options
                 );
                 
@@ -206,7 +207,7 @@ describe("SettingsProvider should", () => {
 
         it("should use dirname(command) when workingDirectory is undefined", () => {
             const options = { workingDirectory: undefined };
-            const runner = new (require('../src/Infrastructure/ExecutableRunner').default)(
+            const runner = new ExecutableRunner(
                 mockProcessExecuter, testCommand, logger, options
             );
             
@@ -216,7 +217,7 @@ describe("SettingsProvider should", () => {
 
         it("should use dirname(command) when workingDirectory is null", () => {
             const options = { workingDirectory: null as any };
-            const runner = new (require('../src/Infrastructure/ExecutableRunner').default)(
+            const runner = new ExecutableRunner(
                 mockProcessExecuter, testCommand, logger, options
             );
             
@@ -225,7 +226,7 @@ describe("SettingsProvider should", () => {
         });
 
         it("should use dirname(command) when options is undefined", () => {
-            const runner = new (require('../src/Infrastructure/ExecutableRunner').default)(
+            const runner = new ExecutableRunner(
                 mockProcessExecuter, testCommand, logger, undefined
             );
             
@@ -238,7 +239,7 @@ describe("SettingsProvider should", () => {
             const pathWithWhitespace = `  ${validPath}  `;
             
             const options = { workingDirectory: pathWithWhitespace };
-            const runner = new (require('../src/Infrastructure/ExecutableRunner').default)(
+            const runner = new ExecutableRunner(
                 mockProcessExecuter, testCommand, logger, options
             );
             
@@ -250,7 +251,7 @@ describe("SettingsProvider should", () => {
             const validPath = "/custom/working/directory";
             
             const options = { workingDirectory: validPath };
-            const runner = new (require('../src/Infrastructure/ExecutableRunner').default)(
+            const runner = new ExecutableRunner(
                 mockProcessExecuter, testCommand, logger, options
             );
             
@@ -262,7 +263,7 @@ describe("SettingsProvider should", () => {
             const relativePath = "./relative/path";
             
             const options = { workingDirectory: relativePath };
-            const runner = new (require('../src/Infrastructure/ExecutableRunner').default)(
+            const runner = new ExecutableRunner(
                 mockProcessExecuter, testCommand, logger, options
             );
             
