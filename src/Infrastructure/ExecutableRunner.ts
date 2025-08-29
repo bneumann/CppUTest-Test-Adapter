@@ -42,7 +42,12 @@ export default class ExecutableRunner {
     this.execFile = processExecuter.ExecFile;
     this.kill = processExecuter.KillProcess;
     this.command = command;
-    this.workingDirectory = options?.workingDirectory ?? dirname(command);
+
+    
+    
+    const wd = options?.workingDirectory;
+    this.workingDirectory = this.isEmptyString(wd) ? dirname(command) : wd!.trim();
+
     this.objDumpExecutable = options?.objDumpExecutable ?? "objdump";
     this.Name = basename(command);
     this.tempFile = `${this.Name}.dump`
@@ -53,6 +58,8 @@ export default class ExecutableRunner {
   }
 
   public get Command(): string { return this.command; }
+  
+  public get WorkingDirectory(): string { return this.workingDirectory; }
 
   public GetTestList(testLocationFetchMode: TestLocationFetchMode): Promise<[string, boolean]> {
 
@@ -154,5 +161,9 @@ export default class ExecutableRunner {
 
   public KillProcess() {
     this.kill();
+  }
+
+  private isEmptyString(value: string | undefined | null): boolean {
+    return typeof value !== 'string' || value.trim() === '';
   }
 }

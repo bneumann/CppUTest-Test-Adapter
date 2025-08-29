@@ -145,10 +145,9 @@ export class CppUTestAdapter implements TestAdapter {
 	}
 
 	private GetExecutionOptions(): ExecutableRunnerOptions | undefined {
-		const testPath = this.settingsProvider.GetTestPath();
 		return {
 			objDumpExecutable: this.settingsProvider.GetObjDumpPath(),
-			workingDirectory: testPath
+			workingDirectory: this.settingsProvider.GetTestPath()
 		}
 	}
 
