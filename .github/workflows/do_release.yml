@@ -64,11 +64,20 @@ jobs:
           if-no-files-found: error
           path: ${{github.workspace}}/cpputest-test-adapter-${{steps.gitversion.outputs.semVer}}.vsix
 
-      - name: publish to marketplace
+      - name: Publish to Open VSX Registry
         if: github.ref == 'refs/heads/master'
-        run: npm run publish-buildserver
-        env:
-            VSCE_PAT: ${{ secrets.VS_MARKETPLACE_TOKEN }}
+        uses: HaaLeo/publish-vscode-extension@v2
+        id: publishToOpenVSX
+        with:
+          pat: ${{ secrets.OPEN_VSX_TOKEN }}
+
+      - name: Publish to Visual Studio Marketplace
+        if: github.ref == 'refs/heads/master'
+        uses: HaaLeo/publish-vscode-extension@v2
+        with:
+          pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
+          registryUrl: https://marketplace.visualstudio.com
+          extensionFile: ${{ steps.publishToOpenVSX.outputs.vsixPath }}
         
       - name: create a release
         if: github.ref == 'refs/heads/master'

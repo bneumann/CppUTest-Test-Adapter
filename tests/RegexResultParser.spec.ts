@@ -16,7 +16,7 @@ describe("RegexResultParser should", () => {
       const resultParser = new RegexResultParser();
 
       const expectedTestResult = new TestResult(TestState.Failed, test.expected.join("\n"));
-      const statusFromRunner : RunResultStatus = (<any>RunResultStatus)[test.status];
+      const statusFromRunner : RunResultStatus = (RunResultStatus as any)[test.status];
       const stringFromRunner = test.value.join("\n");
       expect(resultParser.GetResult(new RunResult(statusFromRunner, stringFromRunner))).to.be.deep.eq(expectedTestResult);
     })
@@ -27,7 +27,7 @@ describe("RegexResultParser should", () => {
       const resultParser = new RegexResultParser();
 
       const expectedTestResult = new TestResult(TestState.Passed, test.expected.join("\n"));
-      const statusFromRunner : RunResultStatus = (<any>RunResultStatus)[test.status];
+      const statusFromRunner : RunResultStatus = (RunResultStatus as any)[test.status];
       const stringFromRunner = test.value.join("\n");
       expect(resultParser.GetResult(new RunResult(statusFromRunner, stringFromRunner))).to.be.deep.eq(expectedTestResult);
     })
@@ -38,7 +38,7 @@ describe("RegexResultParser should", () => {
       const resultParser = new RegexResultParser();
 
       const expectedTestResult = new TestResult(TestState.Skipped, test.expected.join("\n"));
-      const statusFromRunner : RunResultStatus = (<any>RunResultStatus)[test.status];
+      const statusFromRunner : RunResultStatus = (RunResultStatus as any)[test.status];
       const stringFromRunner = test.value.join("\n");
       expect(resultParser.GetResult(new RunResult(statusFromRunner, stringFromRunner))).to.be.deep.eq(expectedTestResult);
     })

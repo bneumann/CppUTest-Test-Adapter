@@ -2,6 +2,7 @@ import { mock } from "ts-mockito";
 import { IDebugConfiguration, IWorkspaceConfiguration, IWorkspaceFolder, SettingsProvider } from '../src/Infrastructure/Infrastructure';
 import { Log } from 'vscode-test-adapter-util';
 import { expect } from "chai";
+import ExecutableRunner from '../src/Infrastructure/ExecutableRunner';
 
 
 class TestSettingsProvider extends SettingsProvider {
@@ -135,4 +136,139 @@ describe("SettingsProvider should", () => {
         const actualPath = settingsProvider.GetTestRunners()
         expect(actualPath).to.have.members(expectedPath);
     })
+
+    describe("testExecutablePath variable resolution", () => {
+        it("should resolve ${workspaceFolder} in testExecutablePath", () => {
+            const logger = mock<Log>();
+            config.testExecutablePath = "${workspaceFolder}/test";
+            const expectedPath = "myFolder/test";
+
+            const settingsProvider = new TestSettingsProvider(logger, config, filesToFind);
+
+            const actualPath = settingsProvider.GetTestPath();
+            expect(actualPath).to.equal(expectedPath);
+        });
+
+        it("should return empty string when testExecutablePath is empty", () => {
+            const logger = mock<Log>();
+            config.testExecutablePath = "";
+
+            const settingsProvider = new TestSettingsProvider(logger, config, filesToFind);
+
+            const actualPath = settingsProvider.GetTestPath();
+            expect(actualPath).to.equal("");
+        });
+
+        it("should return string as-is when no variables present", () => {
+            const logger = mock<Log>();
+            config.testExecutablePath = "/absolute/path/test";
+
+            const settingsProvider = new TestSettingsProvider(logger, config, filesToFind);
+
+            const actualPath = settingsProvider.GetTestPath();
+            expect(actualPath).to.equal("/absolute/path/test");
+        });
+    });
+
+    describe("Enhanced workingDirectory logic with whitespace handling", () => {
+        const logger = mock<Log>();
+        const testCommand = "/path/to/test/executable";
+        const expectedDirname = "/path/to/test";
+        const mockProcessExecuter = {
+            Exec: () => {},
+            ExecFile: () => {},
+            KillProcess: () => {}
+        };
+
+        it("should use dirname(command) when workingDirectory is empty string", () => {
+            const options = { workingDirectory: "" };
+            const runner = new ExecutableRunner(
+                mockProcessExecuter, testCommand, logger, options
+            );
+            
+            const workingDir = runner.WorkingDirectory;
+            expect(workingDir).to.equal(expectedDirname);
+        });
+
+        it("should use dirname(command) when workingDirectory is whitespace only", () => {
+            const whitespaceOnlyCases = ["   ", "\t", "\n", " \t \n ", "\t\t"];
+            
+            whitespaceOnlyCases.forEach(whitespace => {
+                const options = { workingDirectory: whitespace };
+                const runner = new ExecutableRunner(
+                    mockProcessExecuter, testCommand, logger, options
+                );
+                
+                const workingDir = runner.WorkingDirectory;
+                expect(workingDir).to.equal(expectedDirname, 
+                    `Failed for whitespace: "${whitespace}"`);
+            });
+        });
+
+        it("should use dirname(command) when workingDirectory is undefined", () => {
+            const options = { workingDirectory: undefined };
+            const runner = new ExecutableRunner(
+                mockProcessExecuter, testCommand, logger, options
+            );
+            
+            const workingDir = runner.WorkingDirectory;
+            expect(workingDir).to.equal(expectedDirname);
+        });
+
+        it("should use dirname(command) when workingDirectory is null", () => {
+            const options = { workingDirectory: null as any };
+            const runner = new ExecutableRunner(
+                mockProcessExecuter, testCommand, logger, options
+            );
+            
+            const workingDir = runner.WorkingDirectory;
+            expect(workingDir).to.equal(expectedDirname);
+        });
+
+        it("should use dirname(command) when options is undefined", () => {
+            const runner = new ExecutableRunner(
+                mockProcessExecuter, testCommand, logger, undefined
+            );
+            
+            const workingDir = runner.WorkingDirectory;
+            expect(workingDir).to.equal(expectedDirname);
+        });
+
+        it("should preserve valid workingDirectory and trim whitespace", () => {
+            const validPath = "/custom/working/directory";
+            const pathWithWhitespace = `  ${validPath}  `;
+            
+            const options = { workingDirectory: pathWithWhitespace };
+            const runner = new ExecutableRunner(
+                mockProcessExecuter, testCommand, logger, options
+            );
+            
+            const workingDir = runner.WorkingDirectory;
+            expect(workingDir).to.equal(validPath); // Should be trimmed
+        });
+
+        it("should preserve valid workingDirectory without whitespace", () => {
+            const validPath = "/custom/working/directory";
+            
+            const options = { workingDirectory: validPath };
+            const runner = new ExecutableRunner(
+                mockProcessExecuter, testCommand, logger, options
+            );
+            
+            const workingDir = runner.WorkingDirectory;
+            expect(workingDir).to.equal(validPath);
+        });
+
+        it("should handle relative paths correctly", () => {
+            const relativePath = "./relative/path";
+            
+            const options = { workingDirectory: relativePath };
+            const runner = new ExecutableRunner(
+                mockProcessExecuter, testCommand, logger, options
+            );
+            
+            const workingDir = runner.WorkingDirectory;
+            expect(workingDir).to.equal(relativePath);
+        });
+    });
 });
