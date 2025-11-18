@@ -37,7 +37,7 @@
     "publish:pre": "npm run rebuild && vsce publish --pre-release"
   },
   "dependencies": {
-    "glob": "^11.0.0",
+    "glob": "^11.1.0",
     "tslib": "^2.3.1",
     "vscode-test-adapter-api": "^1.9.0",
     "vscode-test-adapter-util": "^0.7.1",
