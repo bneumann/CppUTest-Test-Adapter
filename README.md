@@ -1,7 +1,8 @@
 # CppUTest Test Adapter for Visual Studio Code
 
 [![Tests](https://github.com/bneumann/CppUTest-Test-Adapter/actions/workflows/unit_tests.yml/badge.svg?branch=master)](https://github.com/bneumann/CppUTest-Test-Adapter/actions/workflows/unit_tests.yml)
-[![Ko-fi](https://github.com/bneumann/CppUTest-Test-Adapter/raw/master/img/kofi.png)](https://ko-fi.com/B0B836FAL)
+<a href="https://ko-fi.com/B0B836FAL"><img src="https://github.com/bneumann/CppUTest-Test-Adapter/raw/master/img/kofi.png" width="104px"></a>
+
 
 A Visual Studio Code extension that integrates the [CppUTest](https://cpputest.github.io/) C/C++ unit testing framework into VS Code's Test Explorer. Run, debug, and manage your CppUTest tests seamlessly within your development environment.
 
