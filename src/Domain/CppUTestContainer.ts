@@ -110,12 +110,21 @@ export default class CppUTestContainer {
       const testOrGroup = this.GetGroupOrTest(testId, executableGroup);
       const runner = this.runners.filter(r => r.Name === executableGroup.label)[0];
       if (testOrGroup && runner) {
-        const isTest = testOrGroup instanceof CppUTest;
-        const testRunName = isTest ? `${testOrGroup.group}.${testOrGroup.label}` : `${testOrGroup.label}`;
-        const testRunArg = isTest ? "-t" : "-sg";
         const debugConfig = config as unknown as DebugConfiguration;
-        debugConfig.name = testRunName;
-        debugConfig.args = [testRunArg, testRunName];
+        const isSuite = testOrGroup instanceof CppUTestSuite;
+
+        // If debugging entire suite, run without test filters
+        if (isSuite) {
+          debugConfig.name = testOrGroup.label;
+          debugConfig.args = [];
+        } else {
+          const isTest = testOrGroup instanceof CppUTest;
+          const testRunName = isTest ? `${testOrGroup.group}.${testOrGroup.label}` : `${testOrGroup.label}`;
+          const testRunArg = isTest ? "-t" : "-sg";
+          debugConfig.name = testRunName;
+          debugConfig.args = [testRunArg, testRunName];
+        }
+
         debugConfig.program = runner.Command;
         debugConfig.target = runner.Command;
         await this.vscodeAdapter.StartDebugger((workspaceFolders as WorkspaceFolder[]), debugConfig);

@@ -298,6 +298,33 @@ describe("CppUTestContainer should", () => {
     expect((debugConfigSpy as DebugConfiguration).program).to.be.deep.eq("myProgram");
   })
 
+  it("debug the entire test suite when main suite id is provided", async () => {
+    const mockFolder = mock<WorkspaceFolder>();
+    const debugConfigSpy = {
+      name: "",
+      request: "",
+      type: ""
+    } as DebugConfiguration;
+    when(mockSetting.GetWorkspaceFolders()).thenReturn([instance(mockFolder)]);
+    when(mockSetting.GetDebugConfiguration()).thenReturn(debugConfigSpy);
+    when(mockRunner.Command).thenReturn("myProgram");
+    const container = new CppUTestContainer(instance(mockSetting), instance(mockAdapter), instance(mockResultParser));
+
+    const allTests = await container.LoadTests([instance(mockRunner)]);
+    expect(allTests).to.have.lengthOf(1);
+
+    // When the main suite (executable) id is provided, it should be able to debug
+    const mainSuiteId = allTests[0].id;
+
+    await container.DebugTest(mainSuiteId);
+
+    // The debugger should be started for the entire suite
+    verify(mockAdapter.StartDebugger(anything(), anything())).called();
+    // When debugging the entire suite, args should be empty or contain no test filters
+    expect((debugConfigSpy as DebugConfiguration).name).to.be.eq("Exec1");
+    expect((debugConfigSpy as DebugConfiguration).args).to.be.deep.eq([]);
+  })
+
   it("thrown an error if the debugger is started without config", async () => {
     mockSetting = mock<SettingsProvider>();
     when(mockSetting.GetDebugConfiguration()).thenReturn(undefined);
