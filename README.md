@@ -24,7 +24,7 @@ Add the following to your VS Code `settings.json` to specify your test executabl
 ```json
 {
   "cpputestTestAdapter.testExecutable": "${workspaceFolder}/test/testrunner;${workspaceFolder}/test/subFolder/ut_*",
-  "cpputestTestAdapter.testExecutablePath": "\${workspaceFolder}/test"
+  "cpputestTestAdapter.testExecutablePath": "${workspaceFolder}/test"
 }
 ```
 
