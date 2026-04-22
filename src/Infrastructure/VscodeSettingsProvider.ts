@@ -25,7 +25,8 @@ export default class VscodeSettingsProvider extends SettingsProvider {
           testExecutablePath: wsConfig["testExecutablePath"],
           testLocationFetchMode: wsConfig["testLocationFetchMode"],
           preLaunchTask: wsConfig["preLaunchTask"],
-          ignoreStderr: wsConfig["ignoreStderr"]
+          ignoreStderr: wsConfig["ignoreStderr"],
+          maxBuffer: wsConfig["maxBuffer"]
         }
       }
     })
@@ -57,6 +58,10 @@ export default class VscodeSettingsProvider extends SettingsProvider {
 
   public GetIgnoreStderr(): boolean {
     return this.config.ignoreStderr ?? false;
+  }
+
+  public GetMaxBuffer(): number {
+    return this.config.maxBuffer ?? 52428800;
   }
 
   public GetDebugConfiguration(): (IDebugConfiguration | undefined) {

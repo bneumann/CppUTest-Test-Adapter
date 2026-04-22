@@ -50,6 +50,9 @@ class TestSettingsProvider extends SettingsProvider {
     GetIgnoreStderr(): boolean {
         return this.config.ignoreStderr ?? false;
     }
+    GetMaxBuffer(): number {
+        return this.config.maxBuffer ?? 52428800;
+    }
     protected GetCurrentFilename(): string {
         return "myFile.c";
     }
@@ -78,7 +81,8 @@ describe("SettingsProvider should", () => {
         testExecutablePath: "",
         testLocationFetchMode: "",
         preLaunchTask: "",
-        ignoreStderr: false
+        ignoreStderr: false,
+        maxBuffer: undefined
     };
     let filesToFind = [""];
 
