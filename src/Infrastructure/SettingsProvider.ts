@@ -23,6 +23,7 @@ export abstract class SettingsProvider {
   public abstract GetDebugConfiguration(): (IDebugConfiguration | undefined);
   public abstract GetWorkspaceFolders(): readonly IWorkspaceFolder[] | undefined;
   public abstract GetIgnoreStderr(): boolean;
+  public abstract GetMaxBuffer(): number;
   protected abstract GetCurrentFilename(): string
   protected abstract GetCurrentWorkspaceFolder(): string
   protected abstract GlobFiles(wildcardString: string): string[]

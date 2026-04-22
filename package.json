@@ -138,6 +138,12 @@
           "default": false,
           "type": "boolean",
           "scope": "resource"
+        },
+        "cpputestTestAdapter.maxBuffer": {
+          "description": "Maximum buffer size in bytes for stdout/stderr. Increase if you get ERR_CHILD_PROCESS_STDIO_MAXBUFFER errors",
+          "default": 1048576,
+          "type": "number",
+          "scope": "resource"
         }
       }
     }

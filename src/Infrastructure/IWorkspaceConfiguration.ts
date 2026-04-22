@@ -9,4 +9,5 @@ export interface IWorkspaceConfiguration {
   objDumpExecutable: string | undefined;
   preLaunchTask: string;
   ignoreStderr: boolean;
+  maxBuffer: number | undefined;
 }

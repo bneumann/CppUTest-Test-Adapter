@@ -23,6 +23,7 @@ export interface ExecutableRunnerOptions {
   workingDirectory?: string;
   objDumpExecutable?: string;
   ignoreStderr?: boolean;
+  maxBuffer?: number;
 }
 
 export default class ExecutableRunner {
@@ -33,6 +34,7 @@ export default class ExecutableRunner {
   private readonly workingDirectory: string;
   private readonly objDumpExecutable: string;
   private readonly ignoreStderr: boolean;
+  private readonly maxBuffer: number;
   private readonly tempFile: string;
   public readonly Name: string;
   private dumpCached: boolean;
@@ -52,6 +54,7 @@ export default class ExecutableRunner {
 
     this.objDumpExecutable = options?.objDumpExecutable ?? "objdump";
     this.ignoreStderr = options?.ignoreStderr ?? false;
+    this.maxBuffer = options?.maxBuffer ?? 52428800;
     this.Name = basename(command);
     this.tempFile = `${this.Name}.dump`
     this.dumpCached = false;
@@ -146,7 +149,7 @@ export default class ExecutableRunner {
 
   public RunTest(group: string, test: string): Promise<RunResult> {
     return new Promise<RunResult>((resolve, reject) => {
-      this.execFile(this.command, ["-sg", group, "-sn", test, "-v"], { cwd: this.workingDirectory }, (error: ExecException | null, stdout: string, stderr: string) => {
+      this.execFile(this.command, ["-sg", group, "-sn", test, "-v"], { maxBuffer: this.maxBuffer, cwd: this.workingDirectory }, (error: ExecException | null, stdout: string, stderr: string) => {
         if (error && error.code === null) {
           console.error('stderr', error);
           reject(stderr);

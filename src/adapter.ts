@@ -148,7 +148,8 @@ export class CppUTestAdapter implements TestAdapter {
 		return {
 			objDumpExecutable: this.settingsProvider.GetObjDumpPath(),
 			workingDirectory: this.settingsProvider.GetTestPath(),
-			ignoreStderr: this.settingsProvider.GetIgnoreStderr()
+			ignoreStderr: this.settingsProvider.GetIgnoreStderr(),
+			maxBuffer: this.settingsProvider.GetMaxBuffer()
 		}
 	}
 

@@ -63,6 +63,16 @@ By default, any output to stderr is treated as a test failure. If your tests pro
 ```
 - When `true`, stderr output is not automatically treated as test failure. Tests are marked as failed only if actual failure markers are detected in the output.
 
+## Max Buffer Size
+If you encounter `ERR_CHILD_PROCESS_STDIO_MAXBUFFER` errors with tests that produce large output, increase the buffer size:
+
+```json
+{
+  "cpputestTestAdapter.maxBuffer": 104857600
+}
+```
+- Default is 1MB (1048576 bytes). The example above sets it to 100MB.
+
 ## Debugging
 To debug your tests, configure your launch.json like you would with any debugger (in this case gdb):
 
