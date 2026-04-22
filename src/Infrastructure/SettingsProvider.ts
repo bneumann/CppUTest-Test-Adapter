@@ -21,7 +21,8 @@ export abstract class SettingsProvider {
   public abstract GetTestPath(): string;
   public abstract GetPreLaunchTask(): string;
   public abstract GetDebugConfiguration(): (IDebugConfiguration | undefined);
-  public abstract GetWorkspaceFolders(): readonly IWorkspaceFolder[] | undefined
+  public abstract GetWorkspaceFolders(): readonly IWorkspaceFolder[] | undefined;
+  public abstract GetIgnoreStderr(): boolean;
   protected abstract GetCurrentFilename(): string
   protected abstract GetCurrentWorkspaceFolder(): string
   protected abstract GlobFiles(wildcardString: string): string[]

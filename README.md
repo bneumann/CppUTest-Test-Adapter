@@ -53,6 +53,16 @@ Enable logging for debugging:
 - logpanel: Shows logs in VS Code's Output panel ("CppUTest Test Adapter Log").
 - logfile: Saves logs to a file. Use absolute paths and ensure the directory exists.
 
+## Ignore Stderr
+By default, any output to stderr is treated as a test failure. If your tests produce warnings or logs on stderr without actually failing, you can disable this behavior:
+
+```json
+{
+  "cpputestTestAdapter.ignoreStderr": true
+}
+```
+- When `true`, stderr output is not automatically treated as test failure. Tests are marked as failed only if actual failure markers are detected in the output.
+
 ## Debugging
 To debug your tests, configure your launch.json like you would with any debugger (in this case gdb):
 

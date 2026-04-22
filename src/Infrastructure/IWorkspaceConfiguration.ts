@@ -8,4 +8,5 @@ export interface IWorkspaceConfiguration {
   debugLaunchConfigurationName: string | undefined;
   objDumpExecutable: string | undefined;
   preLaunchTask: string;
+  ignoreStderr: boolean;
 }

@@ -47,6 +47,9 @@ class TestSettingsProvider extends SettingsProvider {
             uri: "."
         }];
     }
+    GetIgnoreStderr(): boolean {
+        return this.config.ignoreStderr ?? false;
+    }
     protected GetCurrentFilename(): string {
         return "myFile.c";
     }
@@ -74,7 +77,8 @@ describe("SettingsProvider should", () => {
         testExecutable: "",
         testExecutablePath: "",
         testLocationFetchMode: "",
-        preLaunchTask: ""
+        preLaunchTask: "",
+        ignoreStderr: false
     };
     let filesToFind = [""];
 
