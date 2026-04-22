@@ -22,6 +22,7 @@ export class RunResult {
 export interface ExecutableRunnerOptions {
   workingDirectory?: string;
   objDumpExecutable?: string;
+  ignoreStderr?: boolean;
 }
 
 export default class ExecutableRunner {
@@ -31,6 +32,7 @@ export default class ExecutableRunner {
   private readonly command: string;
   private readonly workingDirectory: string;
   private readonly objDumpExecutable: string;
+  private readonly ignoreStderr: boolean;
   private readonly tempFile: string;
   public readonly Name: string;
   private dumpCached: boolean;
@@ -49,6 +51,7 @@ export default class ExecutableRunner {
     this.workingDirectory = this.isEmptyString(wd) ? dirname(command) : wd!.trim();
 
     this.objDumpExecutable = options?.objDumpExecutable ?? "objdump";
+    this.ignoreStderr = options?.ignoreStderr ?? false;
     this.Name = basename(command);
     this.tempFile = `${this.Name}.dump`
     this.dumpCached = false;
@@ -148,7 +151,7 @@ export default class ExecutableRunner {
           console.error('stderr', error);
           reject(stderr);
         }
-        if (stderr.trim() != "") {
+        if (!this.ignoreStderr && stderr.trim() != "") {
           resolve(new RunResult(RunResultStatus.Error, stderr));
         } else if (error && error.code !== 0) {
           resolve(new RunResult(RunResultStatus.Failure, stdout));

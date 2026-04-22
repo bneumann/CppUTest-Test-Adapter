@@ -132,6 +132,12 @@
           "default": "objdump",
           "type": "string",
           "scope": "resource"
+        },
+        "cpputestTestAdapter.ignoreStderr": {
+          "description": "Ignore stderr output when determining test result. When true, stderr is not treated as test failure",
+          "default": false,
+          "type": "boolean",
+          "scope": "resource"
         }
       }
     }

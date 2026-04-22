@@ -24,7 +24,8 @@ export default class VscodeSettingsProvider extends SettingsProvider {
           testExecutable: wsConfig["testExecutable"],
           testExecutablePath: wsConfig["testExecutablePath"],
           testLocationFetchMode: wsConfig["testLocationFetchMode"],
-          preLaunchTask: wsConfig["preLaunchTask"]
+          preLaunchTask: wsConfig["preLaunchTask"],
+          ignoreStderr: wsConfig["ignoreStderr"]
         }
       }
     })
@@ -52,6 +53,10 @@ export default class VscodeSettingsProvider extends SettingsProvider {
 
   public GetTestPath(): string {
     return this.ResolveSettingsVariable(this.config.testExecutablePath);
+  }
+
+  public GetIgnoreStderr(): boolean {
+    return this.config.ignoreStderr ?? false;
   }
 
   public GetDebugConfiguration(): (IDebugConfiguration | undefined) {

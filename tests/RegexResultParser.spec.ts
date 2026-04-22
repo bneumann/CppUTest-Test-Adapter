@@ -43,4 +43,17 @@ describe("RegexResultParser should", () => {
       expect(resultParser.GetResult(new RunResult(statusFromRunner, stringFromRunner))).to.be.deep.eq(expectedTestResult);
     })
   })
+
+  describe("ParseResultError", () => {
+    it("should treat stderr as failure", () => {
+      const resultParser = new RegexResultParser();
+      const stderrOutput = "Some warning output to stderr";
+      const runResult = new RunResult(RunResultStatus.Error, stderrOutput);
+
+      const result = resultParser.GetResult(runResult);
+
+      expect(result.state).to.equal(TestState.Failed);
+      expect(result.message).to.equal(stderrOutput);
+    });
+  });
 });

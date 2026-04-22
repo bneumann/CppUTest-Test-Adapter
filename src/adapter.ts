@@ -147,7 +147,8 @@ export class CppUTestAdapter implements TestAdapter {
 	private GetExecutionOptions(): ExecutableRunnerOptions | undefined {
 		return {
 			objDumpExecutable: this.settingsProvider.GetObjDumpPath(),
-			workingDirectory: this.settingsProvider.GetTestPath()
+			workingDirectory: this.settingsProvider.GetTestPath(),
+			ignoreStderr: this.settingsProvider.GetIgnoreStderr()
 		}
 	}
 

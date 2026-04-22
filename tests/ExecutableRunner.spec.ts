@@ -228,6 +228,58 @@ describe("ExecutableRunner should", () => {
       expect(capturedOptions.cwd).to.equal(customWorkingDir);
     });
   });
+
+  describe("ignoreStderr option", () => {
+    it("should return Error status when stderr is present and ignoreStderr is false", async () => {
+      const log = mock<Log>();
+      const stderrOutput = "some stderr warning";
+      const processExecuter = setupMockCalls(undefined, "stdout output", stderrOutput);
+      const command = "runnable";
+
+      const runner = new ExecutableRunner(processExecuter, command, log, { ignoreStderr: false });
+      const result = await runner.RunTest("myGroup", "myTest");
+
+      expect(result).to.be.deep.equal(new RunResult(RunResultStatus.Error, stderrOutput));
+    });
+
+    it("should return Error status when stderr is present and ignoreStderr is not specified", async () => {
+      const log = mock<Log>();
+      const stderrOutput = "some stderr warning";
+      const processExecuter = setupMockCalls(undefined, "stdout output", stderrOutput);
+      const command = "runnable";
+
+      const runner = new ExecutableRunner(processExecuter, command, log);
+      const result = await runner.RunTest("myGroup", "myTest");
+
+      expect(result).to.be.deep.equal(new RunResult(RunResultStatus.Error, stderrOutput));
+    });
+
+    it("should ignore stderr and return Success when ignoreStderr is true and test passes", async () => {
+      const log = mock<Log>();
+      const stdoutOutput = "TEST(myGroup, myTest) - 0 ms";
+      const stderrOutput = "some stderr warning";
+      const processExecuter = setupMockCalls(undefined, stdoutOutput, stderrOutput);
+      const command = "runnable";
+
+      const runner = new ExecutableRunner(processExecuter, command, log, { ignoreStderr: true });
+      const result = await runner.RunTest("myGroup", "myTest");
+
+      expect(result).to.be.deep.equal(new RunResult(RunResultStatus.Success, stdoutOutput));
+    });
+
+    it("should ignore stderr and return Failure when ignoreStderr is true and test fails", async () => {
+      const log = mock<Log>();
+      const stdoutOutput = "TEST(myGroup, myTest) failed";
+      const stderrOutput = "some stderr warning";
+      const processExecuter = setupMockCalls(new ExecError(1), stdoutOutput, stderrOutput);
+      const command = "runnable";
+
+      const runner = new ExecutableRunner(processExecuter, command, log, { ignoreStderr: true });
+      const result = await runner.RunTest("myGroup", "myTest");
+
+      expect(result).to.be.deep.equal(new RunResult(RunResultStatus.Failure, stdoutOutput));
+    });
+  });
 })
 
 function setupMockCalls(error: ExecException | undefined, returnValue: string, errorValue: string) {
